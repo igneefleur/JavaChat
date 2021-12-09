@@ -226,8 +226,49 @@ public class Server {
 	ReentrantLock mutex = new ReentrantLock();
 	
 	// THREADS
-	Thread connect = null;
-	Thread send = null;
+	Thread thread_connect = null;
+	Thread thread_send = null;
+	
+	public String getActualTime() {
+		return null;
+	}
+	
+	public void sendKey(String name) {
+		mutex.lock();
+		Client client = clients.get(name);
+		
+		client.out.println("k" + client.aes.getKey());
+		client.out.println("i" + client.aes.getIntialVector());
+		client.out.flush();
+		mutex.unlock();
+	}
+	
+	public void sendPrivateMessage(String name, String receiver, String message) {
+		String full_message = "<#private>" + "<@" + name + ">" + "<&" + this.getActualTime() + ">" + message;
+		
+		mutex.lock();
+		try {
+			Client client = clients.get(receiver);
+			String encrypted_message = client.aes.encrypt(full_message);
+			client.out.println(message);
+			client.out.flush();
+		} catch (Exception error) { error.printStackTrace(); }
+		mutex.unlock();
+	}
+	
+	public void sendPublicMessage(String name, String message){
+		String full_message = "<#public>" + "<@" + name + ">" + "<&" + this.getActualTime() + ">" + message;
+		
+		mutex.lock();
+		for (Client client : clients.values()) {
+			try {
+				String encrypted_message = client.aes.encrypt(full_message);
+				client.out.println(message);
+				client.out.flush();
+			} catch (Exception error) { error.printStackTrace(); }			
+		}
+		mutex.unlock();
+	}
 	
 	// SCANNER
 	final Scanner scanner = new Scanner(System.in);
@@ -245,7 +286,7 @@ public class Server {
 //// CONNECT CLIENTS ///////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 		
-		connect = new Thread(new Runnable() {
+		thread_connect = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				while(true) {
@@ -257,47 +298,31 @@ public class Server {
 						clients.put(client.name, client);
 						
 						client.aes.generateKey();
-						client.aes.setKey("T9RM+WKyYxsdHBBQPlHxclDSWJj08XFAPAE19ZwaV00=");
-						client.aes.setIv("[-66, 32, 89, -125, 56, -128, -16, -83, -71, -31, -11, -88, 86, -51, -25, 13]");
-						
-						System.out.println(client.aes.getKey());
-						System.out.println(client.aes.getIntialVector());
-						
-						client.out.println("k" + client.aes.getKey());
-						client.out.println("i" + client.aes.getIntialVector());
-						client.out.flush();
-						
 						System.out.println("Nouveau client connecte au nom de : " + client.name);
 						mutex.unlock();
 						
+						sendKey(client.name);
 					} catch (IOException e) { e.printStackTrace(); }
 				}
 			}
 		});
-		connect.start();
+		thread_connect.start();
 		
 ////////////////////////////////////////////////////////////////////////////////
 //// SEND MESSAGES /////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 		
-		send = new Thread(new Runnable() {
+		thread_send = new Thread(new Runnable() {
 			String message = "";
 			@Override
 			public void run() {
 				while(true) {
 					message = scanner.nextLine();
-					message = "server : " + message;
-					
-					mutex.lock();
-					for (Client client : clients.values()) {
-						client.out.println(message);
-						client.out.flush();
-					}
-					mutex.unlock();
+					sendPublicMessage("Server", message);
 				}
 			}
 		});
-		send.start();
+		thread_send.start();
 		
 	}
 ////////////////////////////////////////////////////////////////////////////////
