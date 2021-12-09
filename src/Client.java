@@ -112,9 +112,9 @@ public class Client {
 			String key = cleSecrete.getEncoded().toString();
 			//System.out.println(key);
 		}
-		
-		
-		
+
+
+
 		public IvParameterSpec generateIv() {
 			byte[] initialVector = new byte[16];
 			new SecureRandom().nextBytes(initialVector);
@@ -218,7 +218,7 @@ public class Client {
 
 	private class DiffieHellMan{
 		BigInteger clePrimaire, clePrimaireRacine;
-		
+
 		public void getClePrimaireEtRacine(){
 			this.clePrimaire = BigInteger.valueOf(new PrimeNumberGen().getPrimeNumber());
 			this.clePrimaireRacine = BigInteger.valueOf(new PrimitiveRootGen(this.clePrimaire.intValue()).getPr());
@@ -253,337 +253,342 @@ public class Client {
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-	
-public class Window extends Frame implements WindowListener, KeyListener {
-	private static final long serialVersionUID = 1L;
+	////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////
-//// COLORS ////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
+	public class Window extends Frame implements WindowListener, KeyListener {
+		private static final long serialVersionUID = 1L;
 
-private static final Color background_color = new Color(14, 15, 15);
+		////////////////////////////////////////////////////////////////////
+		//// COLORS ////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////
 
-private static final Color date_color = new Color(130, 130, 130);
-private static final Color message_color = new Color(230, 230, 230);
+		private static final Color background_color = new Color(14, 15, 15);
 
-////////////////////////////////////////////////////////////////////////////////
-//// MESSAGE ///////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-private final class Message extends JPanel {
-	
-/*-----------------------------------------------------------------------------|
-||----------------|----------------|------------------------------------------||
-||      NAME      |      DATE      |                   SPACE                  ||
-||----HEAD--------|----HEAD--------|----HEAD----------------------------------||
-|----THIS----------------------------------------------------------------------|
-|                                                                              |
-|                                  MESSAGE                                     |
-|                                                                              |
-|----THIS---------------------------------------------------------------------*/
-		
-////////////////////////////////////////////////////////////////////
-//// VISUAL ELEMENTS ///////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-		
-private final Panel head = new Panel();
-private final JLabel sender_label;
-private final JLabel arrow_label = new JLabel("  ->  ");
-private final JLabel receiver_label;
-private final JLabel date_label;
-private final JLabel space = new JLabel("  ");
+		private static final Color date_color = new Color(130, 130, 130);
+		private static final Color message_color = new Color(230, 230, 230);
 
-private final JTextArea textarea_message;
+		////////////////////////////////////////////////////////////////////////////////
+		//// MESSAGE ///////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////
+		private final class Message extends JPanel {
 
-////////////////////////////////////////////////////////////////////
-//// ATTRIBUTES ////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
+			/*-----------------------------------------------------------------------------|
+			||----------------|----------------|------------------------------------------||
+			||      NAME      |      DATE      |                   SPACE                  ||
+			||----HEAD--------|----HEAD--------|----HEAD----------------------------------||
+			|----THIS----------------------------------------------------------------------|
+			|                                                                              |
+			|                                  MESSAGE                                     |
+			|                                                                              |
+			|----THIS---------------------------------------------------------------------*/
 
-private final boolean is_public;
+			////////////////////////////////////////////////////////////////////
+			//// VISUAL ELEMENTS ///////////////////////////////////////////////
+			////////////////////////////////////////////////////////////////////
 
-private final String sender_name;
-private final Color sender_color;
+			private final Panel head = new Panel();
+			private final JLabel sender_label;
+			private final JLabel arrow_label = new JLabel("  ->  ");
+			private final JLabel receiver_label;
+			private final JLabel date_label;
+			private final JLabel space = new JLabel("  ");
 
-private final String receiver_name;
-private final Color receiver_color;
+			private final JTextArea textarea_message;
 
-private final String date;
+			////////////////////////////////////////////////////////////////////
+			//// ATTRIBUTES ////////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////////////
 
-private final String message;
-private final String encrypted_message;
+			private final boolean is_public;
 
-private boolean is_encrypted = false;
-		
-////////////////////////////////////////////////////////////////////
-//// CONSTRUCTOR ///////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-public Message(boolean is_public, String sender_name, Color sender_color, String receiver_name, Color receiver_color, String date, String message, String encrypted_message){
-	
-	
-	this.is_public = is_public;
-	
-	this.sender_name = sender_name;
-	this.sender_color = sender_color;
-	
-	this.receiver_name = receiver_name;
-	this.receiver_color = receiver_color;
-	
-	this.date = date;
-	
-	this.message = message;
-	this.encrypted_message = encrypted_message;
-	
-	this.setLayout(new BorderLayout());
+			private final String sender_name;
+			private final Color sender_color;
 
-////// HEAD
-	head.setLayout(new BoxLayout(head, BoxLayout.X_AXIS));
-	
-	sender_label = new JLabel(sender_name);
-	sender_label.setAlignmentX(LEFT_ALIGNMENT);
-	sender_label.setAlignmentY(CENTER_ALIGNMENT);
-	sender_label.setForeground(sender_color);
-	head.add(sender_label);
+			private final String receiver_name;
+			private final Color receiver_color;
+
+			private final String date;
+
+			private final String message;
+			private final String encrypted_message;
+
+			private boolean is_encrypted = false;
+
+			////////////////////////////////////////////////////////////////////
+			//// CONSTRUCTOR ///////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////////////
+			public Message(boolean is_public, String sender_name, Color sender_color, String receiver_name, Color receiver_color, String date, String message, String encrypted_message){
 
 
-	receiver_label = new JLabel();
-	if(!is_public) {
-		arrow_label.setAlignmentX(LEFT_ALIGNMENT);
-		arrow_label.setAlignmentY(CENTER_ALIGNMENT);
-		arrow_label.setForeground(message_color);
-		head.add(arrow_label);
-		
-		receiver_label.setText(receiver_name);
-		receiver_label.setAlignmentX(LEFT_ALIGNMENT);
-		receiver_label.setAlignmentY(CENTER_ALIGNMENT);
-		receiver_label.setForeground(receiver_color);
-		head.add(receiver_label);	
+				this.is_public = is_public;
+
+				this.sender_name = sender_name;
+				this.sender_color = sender_color;
+
+				this.receiver_name = receiver_name;
+				this.receiver_color = receiver_color;
+
+				this.date = date;
+
+				this.message = message;
+				this.encrypted_message = encrypted_message;
+
+				this.setLayout(new BorderLayout());
+
+				////// HEAD
+				head.setLayout(new BoxLayout(head, BoxLayout.X_AXIS));
+
+				sender_label = new JLabel(sender_name);
+				sender_label.setAlignmentX(LEFT_ALIGNMENT);
+				sender_label.setAlignmentY(CENTER_ALIGNMENT);
+				sender_label.setForeground(sender_color);
+				head.add(sender_label);
+
+
+				receiver_label = new JLabel();
+				if(!is_public) {
+					arrow_label.setAlignmentX(LEFT_ALIGNMENT);
+					arrow_label.setAlignmentY(CENTER_ALIGNMENT);
+					arrow_label.setForeground(message_color);
+					head.add(arrow_label);
+
+					receiver_label.setText(receiver_name);
+					receiver_label.setAlignmentX(LEFT_ALIGNMENT);
+					receiver_label.setAlignmentY(CENTER_ALIGNMENT);
+					receiver_label.setForeground(receiver_color);
+					head.add(receiver_label);	
+				}
+
+				space.setAlignmentX(LEFT_ALIGNMENT);
+				space.setAlignmentY(CENTER_ALIGNMENT);
+				head.add(space);
+
+				date_label = new JLabel(date);
+				date_label.setAlignmentX(LEFT_ALIGNMENT);
+				date_label.setAlignmentY(CENTER_ALIGNMENT);
+				date_label.setForeground(date_color);
+				head.add(date_label);
+
+				this.add(head, BorderLayout.NORTH);
+
+				////// TEXT AREA
+				textarea_message = new JTextArea(message, 1, 1);
+				textarea_message.setEditable(false);
+				textarea_message.setColumns(60);
+
+				textarea_message.setLineWrap(true);
+				textarea_message.setWrapStyleWord(true);
+
+				this.add(textarea_message, BorderLayout.SOUTH);
+				this.setMaximumSize(new Dimension(450, 100));
+
+				////// COLORS
+				this.setBackground(background_color);
+
+				textarea_message.setBackground(background_color);
+				textarea_message.setForeground(message_color);
+
+
+			}
+			////////////////////////////////////////////////////////////////////
+			//// SWITCH ////////////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////////////
+			public final void setIsEncrypted(boolean is_encrypted) {
+
+
+				this.is_encrypted = is_encrypted;
+
+				if(this.is_encrypted) textarea_message.setText(encrypted_message);
+				else textarea_message.setText(message);
+
+
+			}}
+		////////////////////////////////////////////////////////////////////////////////
+		//// WINDOW ////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////
+
+		/*-----------------------------------------------------------------------------|
+		||----------------------------------------------------------------------------||
+		|||--------------------------------------------------------------------------|||
+		||||------------------------------------------------------------------------||||
+		|||||----------------------------------------------------------------------|||||
+		|||||                               SPACE                                  |||||
+		|||||----------------------------------------------------------------------|||||
+		||||                                                                        ||||
+		||||                                                                        ||||
+		||||                                                                        ||||
+		||||                                                                        ||||
+		||||                                                                        ||||
+		||||                                                                        ||||
+		||||                              ALL MESSAGES                              ||||
+		||||                                                                        ||||
+		||||                                                                        ||||
+		||||                                                                        ||||
+		||||                                                                        ||||
+		||||                                                                        ||||
+		||||                                                                        ||||
+		||||----MAIN----------------------------------------------------------------||||
+		|||----BODY------------------------------------------------------------------|||
+		|||                                 INPUT                                    |||
+		|||----BODY------------------------------------------------------------------|||
+		||----SCROLLPANE---------------------------------------------------------------|
+		|----WINDOWCHAT---------------------------------------------------------------*/
+
+		private final Client client;
+
+		private boolean is_encrypted = false;
+		private boolean is_cleaned = true;
+
+		private final Panel body = new Panel();
+
+		private final ScrollPane scroll_pane = new ScrollPane(ScrollPane.SCROLLBARS_AS_NEEDED);
+		private final Panel main = new Panel();
+		private final Label space = new Label();
+
+		private final JTextArea input = new JTextArea();
+
+		private final ArrayList<Message> messages = new ArrayList<Message>();
+
+
+		////////////////////////////////////////////////////////////////////
+		//// ADD PUBLIC MESSAGE ////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////
+		public final void addPublicMessage(String sender_name, Color sender_color, String date, String text, String encrypted_text){
+
+
+			Message message = new Message(true, sender_name, sender_color, null, null, date, text, encrypted_text);
+			message.setAlignmentX(LEFT_ALIGNMENT);
+			message.setAlignmentY(BOTTOM_ALIGNMENT);
+
+			messages.add(message);
+			main.add(message);
+			this.pack();
+
+
+		}
+		////////////////////////////////////////////////////////////////////
+		//// ADD PRIVATE MESSAGE ///////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////
+		public final void addPrivateMessage(String sender_name, Color sender_color, String receiver_name, Color receiver_color, String date, String text, String encrypted_text){
+
+
+			Message message = new Message(false, sender_name, sender_color, receiver_name, receiver_color, date, text, encrypted_text);
+			message.setAlignmentX(LEFT_ALIGNMENT);
+			message.setAlignmentY(BOTTOM_ALIGNMENT);
+
+			messages.add(message);
+			main.add(message);
+			this.pack();
+
+
+		}
+		////////////////////////////////////////////////////////////////////
+		//// SWITCH ENCRYPTED\DECRYPTED ////////////////////////////////////
+		////////////////////////////////////////////////////////////////////
+		public final void setIsEncrypted(boolean is_encrypted){
+
+
+			this.is_encrypted = is_encrypted;
+			for (Iterator<Message> iterator = messages.iterator(); iterator.hasNext();)
+				((Message) iterator.next()).setIsEncrypted(is_encrypted);
+
+
+		}
+		////////////////////////////////////////////////////////////////////
+		//// CONSTRUCTOR ///////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////
+		public Window(Client client){
+			super();
+
+
+
+			this.client = client;
+
+			body.setLayout(new BorderLayout());
+
+			main.setBackground(background_color);
+			main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
+			main.add(space);
+			scroll_pane.add(main);
+
+			input.setBackground(background_color);
+			input.setForeground(message_color);
+			input.setRows(3);
+
+			body.add(scroll_pane, BorderLayout.CENTER);		
+			body.add(input, BorderLayout.SOUTH);
+			this.add(body);
+
+			//this.setUndecorated(true);
+			this.pack();
+
+			this.setSize(500, 500);
+			this.setResizable(true);
+
+			this.addWindowListener(this);
+			input.addKeyListener(this);
+
+			this.setTitle("Chat");
+			
+			
+			//affichage
+			this.setVisible(true);
+
+
+		}
+		////////////////////////////////////////////////////////////////////////////////
+		//// EVENTS ////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////
+
+		////// WINDOW
+		@Override
+		public void windowOpened(WindowEvent e) {}
+		@Override
+		public void windowClosing(WindowEvent e) { System.exit(1); }
+		@Override
+		public void windowClosed(WindowEvent e) {}
+		@Override
+		public void windowIconified(WindowEvent e) {}
+		@Override
+		public void windowDeiconified(WindowEvent e) {}
+		@Override
+		public void windowActivated(WindowEvent e) {}
+		@Override
+		public void windowDeactivated(WindowEvent e) {}
+
+		////// KEY
+		@Override
+		public void keyTyped(KeyEvent e) {}
+		@Override
+		public void keyPressed(KeyEvent e) {
+			if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+				String message = input.getText();
+
+				client.sendMessage(message);
+
+				input.setText("");
+				is_cleaned = false;
+			}
+		}
+		@Override
+		public void keyReleased(KeyEvent e) {
+			if(!is_cleaned) {
+				is_cleaned = true;
+				input.setText("");
+			}
+		}
+
+		////////////////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////
 	}
-	
-	space.setAlignmentX(LEFT_ALIGNMENT);
-	space.setAlignmentY(CENTER_ALIGNMENT);
-	head.add(space);
-	
-	date_label = new JLabel(date);
-	date_label.setAlignmentX(LEFT_ALIGNMENT);
-	date_label.setAlignmentY(CENTER_ALIGNMENT);
-	date_label.setForeground(date_color);
-	head.add(date_label);
-	
-	this.add(head, BorderLayout.NORTH);
-	
-////// TEXT AREA
-	textarea_message = new JTextArea(message, 1, 1);
-	textarea_message.setEditable(false);
-	textarea_message.setColumns(60);
 
-	textarea_message.setLineWrap(true);
-	textarea_message.setWrapStyleWord(true);
-	
-	this.add(textarea_message, BorderLayout.SOUTH);
-	this.setMaximumSize(new Dimension(450, 100));
-	
-////// COLORS
-	this.setBackground(background_color);
-	
-	textarea_message.setBackground(background_color);
-	textarea_message.setForeground(message_color);
-	
-	
-}
-////////////////////////////////////////////////////////////////////
-//// SWITCH ////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-public final void setIsEncrypted(boolean is_encrypted) {
-
-	
-	this.is_encrypted = is_encrypted;
-	
-	if(this.is_encrypted) textarea_message.setText(encrypted_message);
-	else textarea_message.setText(message);
-
-
-}}
-////////////////////////////////////////////////////////////////////////////////
-//// WINDOW ////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-	
-/*-----------------------------------------------------------------------------|
-||----------------------------------------------------------------------------||
-|||--------------------------------------------------------------------------|||
-||||------------------------------------------------------------------------||||
-|||||----------------------------------------------------------------------|||||
-|||||                               SPACE                                  |||||
-|||||----------------------------------------------------------------------|||||
-||||                                                                        ||||
-||||                                                                        ||||
-||||                                                                        ||||
-||||                                                                        ||||
-||||                                                                        ||||
-||||                                                                        ||||
-||||                              ALL MESSAGES                              ||||
-||||                                                                        ||||
-||||                                                                        ||||
-||||                                                                        ||||
-||||                                                                        ||||
-||||                                                                        ||||
-||||                                                                        ||||
-||||----MAIN----------------------------------------------------------------||||
-|||----BODY------------------------------------------------------------------|||
-|||                                 INPUT                                    |||
-|||----BODY------------------------------------------------------------------|||
-||----SCROLLPANE---------------------------------------------------------------|
-|----WINDOWCHAT---------------------------------------------------------------*/
-	
-private final Client client;
-
-private boolean is_encrypted = false;
-private boolean is_cleaned = true;
-
-private final Panel body = new Panel();
-
-private final ScrollPane scroll_pane = new ScrollPane(ScrollPane.SCROLLBARS_ALWAYS);
-private final Panel main = new Panel();
-private final Label space = new Label();
-
-private final JTextArea input = new JTextArea();
-
-private final ArrayList<Message> messages = new ArrayList<Message>();
-
-	
-////////////////////////////////////////////////////////////////////
-//// ADD PUBLIC MESSAGE ////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-public final void addPublicMessage(String sender_name, Color sender_color, String date, String text, String encrypted_text){
-	
-	
-	Message message = new Message(true, sender_name, sender_color, null, null, date, text, encrypted_text);
-	message.setAlignmentX(LEFT_ALIGNMENT);
-	message.setAlignmentY(BOTTOM_ALIGNMENT);
-	
-	messages.add(message);
-	main.add(message);
-	this.pack();
-	
-	
-}
-////////////////////////////////////////////////////////////////////
-//// ADD PRIVATE MESSAGE ///////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-public final void addPrivateMessage(String sender_name, Color sender_color, String receiver_name, Color receiver_color, String date, String text, String encrypted_text){
-
-	
-	Message message = new Message(false, sender_name, sender_color, receiver_name, receiver_color, date, text, encrypted_text);
-	message.setAlignmentX(LEFT_ALIGNMENT);
-	message.setAlignmentY(BOTTOM_ALIGNMENT);
-	
-	messages.add(message);
-	main.add(message);
-	this.pack();
-
-
-}
-////////////////////////////////////////////////////////////////////
-//// SWITCH ENCRYPTED\DECRYPTED ////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-public final void setIsEncrypted(boolean is_encrypted){
-
-	
-	this.is_encrypted = is_encrypted;
-	for (Iterator<Message> iterator = messages.iterator(); iterator.hasNext();)
-		((Message) iterator.next()).setIsEncrypted(is_encrypted);
-
-
-}
-////////////////////////////////////////////////////////////////////
-//// CONSTRUCTOR ///////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-public Window(Client client){
-	super();
-	
-	
-	
-	this.client = client;
-	
-	body.setLayout(new BorderLayout());
-	
-	main.setBackground(background_color);
-	main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
-	main.add(space);
-	scroll_pane.add(main);
-	
-	input.setBackground(background_color);
-	input.setForeground(message_color);
-	input.setRows(3);
-	
-	body.add(scroll_pane, BorderLayout.CENTER);		
-	body.add(input, BorderLayout.SOUTH);
-	this.add(body);
-
-	this.setUndecorated(true);
-	this.pack();
-	
-	this.setSize(500, 500);
-	this.setResizable(true);
-	
-	this.addWindowListener(this);
-	input.addKeyListener(this);
-	
-	this.setVisible(true);
-	
-	
-}
-////////////////////////////////////////////////////////////////////////////////
-//// EVENTS ////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-////// WINDOW
-@Override
-public void windowOpened(WindowEvent e) {}
-@Override
-public void windowClosing(WindowEvent e) { System.exit(1); }
-@Override
-public void windowClosed(WindowEvent e) {}
-@Override
-public void windowIconified(WindowEvent e) {}
-@Override
-public void windowDeiconified(WindowEvent e) {}
-@Override
-public void windowActivated(WindowEvent e) {}
-@Override
-public void windowDeactivated(WindowEvent e) {}
-	
-////// KEY
-@Override
-public void keyTyped(KeyEvent e) {}
-@Override
-public void keyPressed(KeyEvent e) {
-	if(e.getKeyCode() == KeyEvent.VK_ENTER) {
-		String message = input.getText();
-		
-		client.sendMessage(message);
-		
-		input.setText("");
-		is_cleaned = false;
-	}
-}
-@Override
-public void keyReleased(KeyEvent e) {
-	if(!is_cleaned) {
-		is_cleaned = true;
-		input.setText("");
-	}
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-}
-	
 	CleAES aes = new CleAES();
 	DiffieHellMan securiteInitial = new DiffieHellMan();
 
+	//verification du message de FERMETURE DE CONNEXION
 	Boolean conditionArret(String message) {
 		return message.toLowerCase().equals("bye");
 	};
@@ -602,26 +607,23 @@ public void keyReleased(KeyEvent e) {
 	Socket echoSocket = null;
 	PrintWriter out  = null;
 	BufferedReader in = null;
-	
-////// WINDOW
+
+	////// WINDOW
 	Window window = new Window(this);
 
 	//la lecture des messages qui vont être envoyé
 	final Scanner scanner = new Scanner(System.in);
 
 
-	// TODO : A SUPPRIMER
-	public String[] retireBalise(String message) {
-		int fin = 0;
-		for (int i = 0; i < message.length(); i++) {
-			if (message.charAt(i) == '>') {
-				fin = i+1;
-			}
-		}
-		String[] retour = new String[2];
-		retour[0] = message.substring(0, fin);
-		retour[1] = message.substring(fin);
-		return retour;
+	public String getActualTime() {
+		
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+		LocalTime time = LocalTime.now();
+		
+		return time.format(formatter);
+
+
 	}
 
 	//fermeture du client - fermeture de l'application
@@ -641,192 +643,196 @@ public void keyReleased(KeyEvent e) {
 		String[] secondeInstant = instant.split(":");
 		String[] secondeReference = reference.split(":");
 		Integer reponse = Integer.parseInt(secondeInstant[1]) - Integer.parseInt(secondeReference[1]);
-		
+
 		if (reponse < 0 ) {
 			reponse +=60;
 		}
-		
+
 		return reponse;
 
 	}
 
-////////////////////////////////////////////////////////////////////////////////
-//// WAIT KEY //////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-private boolean waitKey(String message) {
+	////////////////////////////////////////////////////////////////////////////////
+	//// WAIT KEY //////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+	private boolean waitKey(String message) {
 
-	
-	DocumentBuilder document_builder = null;
-	Document document = null;
-	
-	DocumentBuilderFactory document_builder_factory = DocumentBuilderFactory.newInstance();
-	try { document_builder = document_builder_factory.newDocumentBuilder(); } catch (ParserConfigurationException error) { return false; }
-	try { document = document_builder.parse(new InputSource(new StringReader(message))); } catch (SAXException | IOException error) { return false; }
-	
-	document.getDocumentElement().normalize();
-	Element root = document.getDocumentElement();
-	String root_name = root.getNodeName();
-	
-	if(root_name.equals("aes")) {
-		String key = root.getElementsByTagName("key").item(0).getTextContent();
-		String vector = root.getElementsByTagName("vector").item(0).getTextContent();
-		
-		aes.setKey(key);
-		aes.setIv(vector);
-		
-		return true;
-	}
-	
-	return false;
-	
-	
-}	
-////////////////////////////////////////////////////////////////////////////////
-//// SEND MESSAGE //////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-private final void sendMessage(String message) {
-	String xml_message = "";
-	
-	if(message.charAt(0) == '/') {
-////// COMMAND
-		String[] command = message.split(" ");
-		
-		switch (command[0]) {
-		case "/help":
-			xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<command><help>"
-					+ "</help></command>";
-			
-			break;
-		case "/rename":
-			xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<command><rename>"
-					+ 		"<name>" + command[1] + "</name>"
-					+ "</rename></command>";
-			
-			break;
-		case "/color":
-			xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<command><color>"
-					+ 		"<red>" + command[1] + "</red>"
-					+ 		"<green>" + command[2] + "</green>"
-					+ 		"<blue>" + command[3] + "</blue>"
-					+ "</color></command>";
-			
-			break;
-		case "/private":
-			xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-					+ "<command><private>"
-					+ 		"<receiver>" + command[1] + "</receiver>"
-					+ 		"<content>" + message.substring(10 + command[1].length()) + "</content>"
-					+ "</private></command>";
-			
-			break;
-		default: return;
+
+		DocumentBuilder document_builder = null;
+		Document document = null;
+
+		DocumentBuilderFactory document_builder_factory = DocumentBuilderFactory.newInstance();
+		try { document_builder = document_builder_factory.newDocumentBuilder(); } catch (ParserConfigurationException error) { return false; }
+		try { document = document_builder.parse(new InputSource(new StringReader(message))); } catch (SAXException | IOException error) { return false; }
+
+		document.getDocumentElement().normalize();
+		Element root = document.getDocumentElement();
+		String root_name = root.getNodeName();
+
+		if(root_name.equals("aes")) {
+			String key = root.getElementsByTagName("key").item(0).getTextContent();
+			String vector = root.getElementsByTagName("vector").item(0).getTextContent();
+
+			aes.setKey(key);
+			aes.setIv(vector);
+
+			return true;
 		}
-		
-	} else {
-		
-////// PUBLIC MESSAGE
-		xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<public>"
-				+		"<content>" + message + "</content>"
-				+ "</public>";
+
+		return false;
+
+
+	}	
+	////////////////////////////////////////////////////////////////////////////////
+	//// SEND MESSAGE //////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+	private final void sendMessage(String message) {
+		String xml_message = "";
+
+		if(message.charAt(0) == '/') {
+			////// COMMAND
+			String[] command = message.split(" ");
+
+			switch (command[0]) {
+			case "/help":
+				xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+						+ "<command><help>"
+						+ "</help></command>";
+
+				break;
+			case "/rename":
+				xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+						+ "<command><rename>"
+						+ 		"<name>" + command[1] + "</name>"
+						+ "</rename></command>";
+
+				break;
+			case "/color":
+				xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+						+ "<command><color>"
+						+ 		"<red>" + command[1] + "</red>"
+						+ 		"<green>" + command[2] + "</green>"
+						+ 		"<blue>" + command[3] + "</blue>"
+						+ "</color></command>";
+
+				break;
+			case "/private":
+				xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+						+ "<command><private>"
+						+ 		"<receiver>" + command[1] + "</receiver>"
+						+ 		"<content>" + message.substring(10 + command[1].length()) + "</content>"
+						+ "</private></command>";
+
+				break;
+			default: return;
+			}
+
+		} else {
+
+			////// PUBLIC MESSAGE
+			xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<public>"
+					+		"<content>" + message + "</content>"
+					+ "</public>";
+		}
+		try {
+			out.println(aes.crypatage(xml_message));
+			out.flush();
+		} catch (Exception error) { error.printStackTrace(); }
+
+	}	
+	////////////////////////////////////////////////////////////////////////////////
+	//// READ MESSAGE //////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+	private final void readMessage(String message, String encrypted_message) {
+
+		String sender = "";
+
+		String sender_red = "";
+		String sender_green = "";
+		String sender_blue = "";
+		Color sender_color;
+
+		String receiver = "";
+
+		String receiver_red = "";
+		String receiver_green = "";
+		String receiver_blue = "";
+		Color receiver_color;
+
+		String content = "";
+		String time = "";
+
+		DocumentBuilder document_builder = null;
+		Document document = null;
+
+		DocumentBuilderFactory document_builder_factory = DocumentBuilderFactory.newInstance();
+		try { document_builder = document_builder_factory.newDocumentBuilder(); } catch (ParserConfigurationException error) { return; }
+		try { document = document_builder.parse(new InputSource(new StringReader(message))); } catch (SAXException | IOException error) { return; }
+
+		document.getDocumentElement().normalize();
+		Element root = document.getDocumentElement();
+		String root_name = root.getNodeName();
+
+		switch (root_name) {
+		case "public":
+			////// PUBLIC MESSAGE
+			sender = root.getElementsByTagName("sender").item(0).getTextContent();
+
+			sender_red = root.getElementsByTagName("sender-red").item(0).getTextContent();
+			sender_green = root.getElementsByTagName("sender-green").item(0).getTextContent();
+			sender_blue = root.getElementsByTagName("sender-blue").item(0).getTextContent();
+
+			time = root.getElementsByTagName("time").item(0).getTextContent();
+			content = root.getElementsByTagName("content").item(0).getTextContent();
+
+			sender_color = new Color(Integer.parseInt(sender_red), Integer.parseInt(sender_green), Integer.parseInt(sender_blue));
+
+			System.out.println(time + " | " + sender + " -> " + "everyone" + " : " + content);
+			window.addPublicMessage(sender, sender_color, time, content, encrypted_message);
+			break;
+		case "private":
+			////// PRIVATE MESSAGE
+			sender = root.getElementsByTagName("sender").item(0).getTextContent();
+
+			sender_red = root.getElementsByTagName("sender-red").item(0).getTextContent();
+			sender_green = root.getElementsByTagName("sender-green").item(0).getTextContent();
+			sender_blue = root.getElementsByTagName("sender-blue").item(0).getTextContent();
+
+			receiver = root.getElementsByTagName("receiver").item(0).getTextContent();
+
+			receiver_red = root.getElementsByTagName("receiver-red").item(0).getTextContent();
+			receiver_green = root.getElementsByTagName("receiver-green").item(0).getTextContent();
+			receiver_blue = root.getElementsByTagName("receiver-blue").item(0).getTextContent();
+
+			time = root.getElementsByTagName("time").item(0).getTextContent();
+			content = root.getElementsByTagName("content").item(0).getTextContent();
+
+			sender_color = new Color(Integer.parseInt(sender_red), Integer.parseInt(sender_green), Integer.parseInt(sender_blue));
+			receiver_color = new Color(Integer.parseInt(receiver_red), Integer.parseInt(receiver_green), Integer.parseInt(receiver_blue));
+
+			System.out.println(time + " | " + sender + " -> " + receiver + " : " + content);
+			window.addPrivateMessage(sender, sender_color, receiver, receiver_color, time, content, encrypted_message);
+			break;
+		default:
+			break;
+		}
 	}
-	try {
-		out.println(aes.crypatage(xml_message));
-		out.flush();
-	} catch (Exception error) { error.printStackTrace(); }
+	////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
 
-}	
-////////////////////////////////////////////////////////////////////////////////
-//// READ MESSAGE //////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-private final void readMessage(String message, String encrypted_message) {
-	
-	String sender = "";
-	
-	String sender_red = "";
-	String sender_green = "";
-	String sender_blue = "";
-	Color sender_color;
-	
-	String receiver = "";
-	
-	String receiver_red = "";
-	String receiver_green = "";
-	String receiver_blue = "";
-	Color receiver_color;
-	
-	String content = "";
-	String time = "";
-	
-	DocumentBuilder document_builder = null;
-	Document document = null;
-	
-	DocumentBuilderFactory document_builder_factory = DocumentBuilderFactory.newInstance();
-	try { document_builder = document_builder_factory.newDocumentBuilder(); } catch (ParserConfigurationException error) { return; }
-	try { document = document_builder.parse(new InputSource(new StringReader(message))); } catch (SAXException | IOException error) { return; }
-	
-	document.getDocumentElement().normalize();
-	Element root = document.getDocumentElement();
-	String root_name = root.getNodeName();
-	
-	switch (root_name) {
-	case "public":
-////// PUBLIC MESSAGE
-		sender = root.getElementsByTagName("sender").item(0).getTextContent();
 
-		sender_red = root.getElementsByTagName("sender-red").item(0).getTextContent();
-		sender_green = root.getElementsByTagName("sender-green").item(0).getTextContent();
-		sender_blue = root.getElementsByTagName("sender-blue").item(0).getTextContent();
-		
-		time = root.getElementsByTagName("time").item(0).getTextContent();
-		content = root.getElementsByTagName("content").item(0).getTextContent();
-		
-		sender_color = new Color(Integer.parseInt(sender_red), Integer.parseInt(sender_green), Integer.parseInt(sender_blue));
-		
-		System.out.println(time + " | " + sender + " -> " + "everyone" + " : " + content);
-		window.addPublicMessage(sender, sender_color, time, content, encrypted_message);
-		break;
-	case "private":
-////// PRIVATE MESSAGE
-		sender = root.getElementsByTagName("sender").item(0).getTextContent();
-		
-		sender_red = root.getElementsByTagName("sender-red").item(0).getTextContent();
-		sender_green = root.getElementsByTagName("sender-green").item(0).getTextContent();
-		sender_blue = root.getElementsByTagName("sender-blue").item(0).getTextContent();
-		
-		receiver = root.getElementsByTagName("receiver").item(0).getTextContent();
-		
-		receiver_red = root.getElementsByTagName("receiver-red").item(0).getTextContent();
-		receiver_green = root.getElementsByTagName("receiver-green").item(0).getTextContent();
-		receiver_blue = root.getElementsByTagName("receiver-blue").item(0).getTextContent();
-		
-		time = root.getElementsByTagName("time").item(0).getTextContent();
-		content = root.getElementsByTagName("content").item(0).getTextContent();
-
-		sender_color = new Color(Integer.parseInt(sender_red), Integer.parseInt(sender_green), Integer.parseInt(sender_blue));
-		receiver_color = new Color(Integer.parseInt(receiver_red), Integer.parseInt(receiver_green), Integer.parseInt(receiver_blue));
-
-		System.out.println(time + " | " + sender + " -> " + receiver + " : " + content);
-		window.addPrivateMessage(sender, sender_color, receiver, receiver_color, time, content, encrypted_message);
-		break;
-	default:
-		break;
-	}
-}
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-	
 	@SuppressWarnings("deprecation")
 	public Client(String lien,	int port) {
 
 		try {
 			//info serv
 			System.out.println("Chat : [Connecting] - Recherche du serveur.");
+			
+			String textInitiation = "[Connecting] - La relation au serveur est en cours d'etablissement...";
+			window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), textInitiation, "");
+			
 			connexion = new Thread(new Runnable() {
 				@Override
 				public void run() {
@@ -847,17 +853,14 @@ private final void readMessage(String message, String encrypted_message) {
 					System.out.println("Chat : [Connecting] - Recherche en cours... " +moment.toString()+"s.");
 					memo = moment;
 				}
-				
-				//a enlever
-				if (memo == 5) {
-					echoSocket = new Socket();
-				}
 			}
 			if (echoSocket != null) {
 				connexion.stop();
 			}
+			
+			String textRelationServeur = "[Connected] - La relation au serveur est effectuee.";
 
-
+			window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), textRelationServeur, "");
 			System.out.println("Chat : [Connecting] - Serveur trouvé.");
 
 			//connexion
@@ -892,10 +895,10 @@ private final void readMessage(String message, String encrypted_message) {
 								| IllegalBlockSizeException e1) {e1.printStackTrace();}
 						 */
 						//############################################
-						
-						
+
+
 						sendMessage(message);
-						
+
 						//try {out.println(aes.crypatage(message));} catch (Exception e) {e.printStackTrace();}
 						//out.flush();
 						if (conditionArret(message)) {
@@ -918,7 +921,7 @@ private final void readMessage(String message, String encrypted_message) {
 							if(message != null && waitKey(message)) break;
 						}catch (Exception e) {System.out.println("Chat : [Error] - "+e);}
 					}
-					
+
 					//discussion classique
 					try {
 						message = in.readLine();
@@ -957,27 +960,27 @@ private final void readMessage(String message, String encrypted_message) {
 		}
 		catch(IOException e){
 			System.out.println("Chat : [Error] - La connexion ne peut pas être établi : "+e) ;
-			
+
 		} 
 
 	}
 
 	//TODO 
 	/*
-	 * balise pour InitialVector
-	 * balise pour SecretKey
 	 * 
-	 * Clé + IV unique pour chaque client
-	 * Gestion message privé/public
+	 * 
+	 * faire un bouton pour avoir la cle sur un fichier
+	 * 
+	 * 
 	 * 
 	 * gestion de la perte de serveur
 	 * gestion de la fermeture de la connexion
 	 * 
 	 * fermeture de l'application
 	 * 
-	 * partie graphique
+	 * ajouter un Bouton
 	 * 
-	 * faire le compte-rendue
+	 * faire le compte-rendue !
 	 * 
 	 */
 

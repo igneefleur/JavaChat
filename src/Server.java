@@ -37,6 +37,8 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -317,9 +319,12 @@ break; } break; default: break; }}}
 //// GET TIME //////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 public String getActualTime() {
-
 	
-	return null;
+	
+	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+	LocalTime time = LocalTime.now();
+	
+	return time.format(formatter);
 
 
 }
