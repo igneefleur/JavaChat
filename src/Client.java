@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.net.SocketException;
@@ -23,11 +24,20 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
+////// COLOR
+import java.awt.Color;
 
 
 @SuppressWarnings("unused")
@@ -250,6 +260,7 @@ public class Client {
 	final Scanner scanner = new Scanner(System.in);
 
 
+	// TODO : A SUPPRIMER
 	public String[] retireBalise(String message) {
 		int fin = 0;
 		for (int i = 0; i < message.length(); i++) {
@@ -289,6 +300,179 @@ public class Client {
 
 	}
 
+////////////////////////////////////////////////////////////////////////////////
+//// WAIT KEY //////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+private boolean waitKey(String message) {
+
+	
+	DocumentBuilder document_builder = null;
+	Document document = null;
+	
+	DocumentBuilderFactory document_builder_factory = DocumentBuilderFactory.newInstance();
+	try { document_builder = document_builder_factory.newDocumentBuilder(); } catch (ParserConfigurationException error) { return false; }
+	try { document = document_builder.parse(new InputSource(new StringReader(message))); } catch (SAXException | IOException error) { return false; }
+	
+	document.getDocumentElement().normalize();
+	Element root = document.getDocumentElement();
+	String root_name = root.getNodeName();
+	
+	if(root_name.equals("aes")) {
+		String key = root.getElementsByTagName("key").item(0).getTextContent();
+		String vector = root.getElementsByTagName("vector").item(0).getTextContent();
+		
+		aes.setKey(key);
+		aes.setIv(vector);
+		
+		return true;
+	}
+	
+	return false;
+	
+	
+}	
+////////////////////////////////////////////////////////////////////////////////
+//// SEND MESSAGE //////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+private final void sendMessage(String message) {
+	String xml_message = "";
+	
+	if(message.charAt(0) == '/') {
+////// COMMAND
+		String[] command = message.split(" ");
+		
+		switch (command[0]) {
+		case "/help":
+			xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<command><help>"
+					+ "</help></command>";
+			
+			break;
+		case "/rename":
+			xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<command><rename>"
+					+ 		"<name>" + command[1] + "</name>"
+					+ "</rename></command>";
+			
+			break;
+		case "/color":
+			xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<command><color>"
+					+ 		"<red>" + command[1] + "</red>"
+					+ 		"<green>" + command[2] + "</green>"
+					+ 		"<blue>" + command[3] + "</blue>"
+					+ "</rename></color>";
+			
+			break;
+		case "/private":
+			xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<command><private>"
+					+ 		"<receiver>" + command[1] + "</receiver>"
+					+ 		"<content>" + message.substring(10 + command[1].length()) + "</content>"
+					+ "</private></command>";
+			
+			break;
+		default: return;
+		}
+		
+	} else {
+		
+////// PUBLIC MESSAGE
+		xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<public>"
+				+		"<content>" + message + "</content>"
+				+ "</public>";
+	}
+	try {
+		out.println(aes.crypatage(xml_message));
+		out.flush();
+	} catch (Exception error) { error.printStackTrace(); }
+
+}	
+////////////////////////////////////////////////////////////////////////////////
+//// READ MESSAGE //////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+private final void readMessage(String message, String encrypted_message) {
+	
+	String sender = "";
+	
+	String sender_red = "";
+	String sender_green = "";
+	String sender_blue = "";
+	Color sender_color;
+	
+	String receiver = "";
+	
+	String receiver_red = "";
+	String receiver_green = "";
+	String receiver_blue = "";
+	Color receiver_color;
+	
+	String content = "";
+	String time = "";
+	
+	DocumentBuilder document_builder = null;
+	Document document = null;
+	
+	DocumentBuilderFactory document_builder_factory = DocumentBuilderFactory.newInstance();
+	try { document_builder = document_builder_factory.newDocumentBuilder(); } catch (ParserConfigurationException error) { return; }
+	try { document = document_builder.parse(new InputSource(new StringReader(message))); } catch (SAXException | IOException error) { return; }
+	
+	document.getDocumentElement().normalize();
+	Element root = document.getDocumentElement();
+	String root_name = root.getNodeName();
+	
+	switch (root_name) {
+	case "public":
+////// PUBLIC MESSAGE
+		sender = root.getElementsByTagName("sender").item(0).getTextContent();
+
+		sender_red = root.getElementsByTagName("sender-red").item(0).getTextContent();
+		sender_green = root.getElementsByTagName("sender-green").item(0).getTextContent();
+		sender_blue = root.getElementsByTagName("sender-blue").item(0).getTextContent();
+		
+		time = root.getElementsByTagName("time").item(0).getTextContent();
+		content = root.getElementsByTagName("content").item(0).getTextContent();
+		
+		sender_color = new Color(Integer.parseInt(sender_red), Integer.parseInt(sender_green), Integer.parseInt(sender_blue));
+		
+		System.out.println(time + " | " + sender + " -> " + "everyone" + " : " + content);
+		// TODO : CONNECTION WITH WINDOW like :
+		// window.addPublicMessage(sender, time, sender_color, content, encrypted_message);
+		break;
+	case "private":
+////// PRIVATE MESSAGE
+		sender = root.getElementsByTagName("sender").item(0).getTextContent();
+		
+		sender_red = root.getElementsByTagName("sender-red").item(0).getTextContent();
+		sender_green = root.getElementsByTagName("sender-green").item(0).getTextContent();
+		sender_blue = root.getElementsByTagName("sender-blue").item(0).getTextContent();
+		
+		receiver = root.getElementsByTagName("receiver").item(0).getTextContent();
+		
+		receiver_red = root.getElementsByTagName("receiver-red").item(0).getTextContent();
+		receiver_green = root.getElementsByTagName("receiver-green").item(0).getTextContent();
+		receiver_blue = root.getElementsByTagName("receiver-blue").item(0).getTextContent();
+		
+		time = root.getElementsByTagName("time").item(0).getTextContent();
+		content = root.getElementsByTagName("content").item(0).getTextContent();
+
+		sender_color = new Color(Integer.parseInt(sender_red), Integer.parseInt(sender_green), Integer.parseInt(sender_blue));
+		receiver_color = new Color(Integer.parseInt(receiver_red), Integer.parseInt(receiver_green), Integer.parseInt(receiver_blue));
+
+		System.out.println(time + " | " + sender + " -> " + receiver + " : " + content);
+		// TODO : CONNECTION WITH WINDOW like :
+		// window.addPrivateMessage(sender, receiver, time, sender_color, receiver_color, content, encrypted_message);
+		break;
+	default:
+		break;
+	}
+}
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+	
 	@SuppressWarnings("deprecation")
 	public Client(String lien,	int port) {
 
@@ -360,8 +544,12 @@ public class Client {
 								| IllegalBlockSizeException e1) {e1.printStackTrace();}
 						 */
 						//############################################
-						try {out.println(aes.crypatage(message));} catch (Exception e) {e.printStackTrace();}
-						out.flush();
+						
+						
+						sendMessage(message);
+						
+						//try {out.println(aes.crypatage(message));} catch (Exception e) {e.printStackTrace();}
+						//out.flush();
 						if (conditionArret(message)) {
 							Quit();}
 					}
@@ -376,33 +564,22 @@ public class Client {
 				public void run() {
 
 					//recuperation des informations pour le fonctionnement de la l'AES
-					while (recupKey || recupInitVector) {
+					while(true) {
 						try {
 							String message = in.readLine();
-							if (message.charAt(0) == 'k') {
-								String cle = message.substring(1, message.length());
-
-								//System.out.println(cle);
-								aes.setKey(cle);
-								recupKey = false;
-							}
-
-							if (message.charAt(0) == 'i') {
-								String iv = message.substring(1, message.length());
-								//System.out.println(iv);
-								aes.setIv(iv);
-								recupInitVector = false;
-							}
+							if(message != null && waitKey(message)) break;
 						}catch (Exception e) {System.out.println("Chat : [Error] - "+e);}
 					}
-
+					
 					//discussion classique
 					try {
 						message = in.readLine();
 						while(message!=null){
-							String[] retour = null;
-							try {retour = retireBalise(aes.decrypatage(message));} catch (Exception e) {System.out.println("Chat : [Error] - "+e);}
-							System.out.println(retour[0]+retour[1]);
+							String decrypted_message = null;
+							try {decrypted_message = aes.decrypatage(message);} catch (Exception e) {System.out.println("Chat : [Error] - "+e);}
+
+							readMessage(decrypted_message, message);
+
 							if(conditionArret(message)) {
 								Quit();
 							}
@@ -458,7 +635,7 @@ public class Client {
 
 	public static void main(String[] args) {
 		//$ ip -br -c a (sur le pc serveur)
-		Client client = new Client("192.168.23.194",55555);
+		Client client = new Client("127.0.0.1",55555);
 	}
 }
 

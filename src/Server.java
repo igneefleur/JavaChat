@@ -141,6 +141,11 @@ private class Client {
 
 ////// THREAD
 	private Thread thread_receive;
+
+////// COLOR
+	String red = "0";
+	String green = "230";
+	String blue = "230";
 			
 ////////////////////////////////////////////////////////////////////
 //// INITIALISATION ////////////////////////////////////////////////
@@ -183,64 +188,23 @@ thread_receive = new Thread(new Runnable() {
 }}}); thread_receive.start(); }
 
 /*
-							if(decrypted_message.charAt(0) == '/') {
-								decrypted_message = decrypted_message.substring(1);
-								
-								String[] command = decrypted_message.split(" ");
-								switch (command[0]) {
-								case "help" :
-									out.println("===========================================================");
-									out.println("All commands :");
-									out.println();
-									out.println("/help                          show this help");
-									out.println("/rename [NAME]                 change your name");
-									out.println("/color [RED] [GREEN] [BLUE]    change your colorname");
-									out.println("/private [NAME] [TEXT]         send private message to user");
-									out.println("===========================================================");
-									out.flush();
-									break;
-								case "rename":
-									command[1] = command[1];
-									if(clients.containsKey(command[1])) {
-										out.println("The name \"" + command[1] + "\" is already used");
-										out.flush();
-									} else {
-										Client self = clients.get(name);
-										clients.remove(name);
-										name = command[1];
-										clients.put(name, self);
-										out.println("Name changed");
-										out.flush(); // manque la securite du mutex
-									}
-									break;
-								case "private" :
-									if(clients.containsKey(command[1])) {
-										Client other_client = clients.get(command[1]);
-										
-										sendPrivateMessage(name, other_client.name, decrypted_message.substring(9 + command[1].length()));
-									} else {
-										sendPrivateMessage(server_name, name, "Unknow user \"" + command[1] + "\"");
-									}
-									
-									
-									break;
-								default :
-									out.println("Unknow command : " + command[0]);
-									out.flush();
-									break;
-								}
-								
-								System.out.println(name + " : /" + decrypted_message);
-							} else { // message publique :
-								sendPublicMessage(name, decrypted_message);
-							}
+out.println("===========================================================");
+out.println("All commands :");
+out.println();
+out.println("/help                          show this help");
+out.println("/rename [NAME]                 change your name");
+out.println("/color [RED] [GREEN] [BLUE]    change your colorname");
+out.println("/private [NAME] [TEXT]         send private message to user");
+out.println("===========================================================");
+out.flush();
 */
 ////////////////////////////////////////////////////////////////////
 //// READ MESSAGE //////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////	
 private final void read(String message) {	
-	String sender = name;
-	String receiver = "";
+	Client sender = clients.get(name);
+	Client receiver;
+	String receiver_name = "";
 	String content = "";
 	
 	DocumentBuilder document_builder = null;
@@ -258,39 +222,58 @@ private final void read(String message) {
 	case "public":
 ////// PUBLIC MESSAGE
 		content = root.getElementsByTagName("content").item(0).getTextContent();
-		
-		System.out.println(content);
-		
-		sendPublicMessage(sender, content);
+				
+		sendPublicMessage(sender.name, sender.red, sender.green, sender.blue, content);
 		break;
 	case "private":
 ////// PRIVATE MESSAGE
-		receiver = root.getElementsByTagName("receiver").item(0).getTextContent();
+		receiver_name = root.getElementsByTagName("receiver").item(0).getTextContent();
 		content = root.getElementsByTagName("content").item(0).getTextContent();
 		
-		if(clients.containsKey(receiver))
-			sendPrivateMessage(sender, receiver, content);
-		else
-			sendPrivateMessage(server_name, sender, "Unknow user " + receiver);
+		if(clients.containsKey(receiver_name)) {
+			receiver = clients.get(receiver_name);
+			sendPrivateMessage(sender.name, sender.red, sender.green, sender.blue, receiver.name, receiver.red, receiver.green, receiver.blue, content);
+		} else
+			sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue, "Unknow user " + receiver_name);
 		break;
 	case "command":
 ////// COMMAND
 		String command = root.getFirstChild().getNodeName();
 		switch (command) {
 		case "help":
-			
+			sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue,
+					"HELP"
+			);
 			break;
 		case "rename":
+			String new_name = root.getElementsByTagName("name").item(0).getTextContent();
 			
+			if(clients.containsKey(new_name) || new_name.equals(server_name))
+				sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue, "Name " + new_name + " is already used");
+			else {
+				Client self = clients.get(name);
+				clients.remove(name);
+				name = new_name;
+				clients.put(name, self);
+				sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue, "Your name changes to " + name);
+			}			
 			break;
 		case "color":
-			
+			// TODO
 			break;
 		case "private":
+			receiver_name = root.getElementsByTagName("receiver").item(0).getTextContent();
+			content = root.getElementsByTagName("content").item(0).getTextContent();
 			
+			if(clients.containsKey(receiver_name)) {
+				receiver = clients.get(receiver_name);
+				
+				sendPrivateMessage(sender.name, sender.red, sender.green, sender.blue, receiver.name, receiver.red, receiver.green, receiver.blue, content);
+			} else
+				sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue, "Unknow user " + receiver_name);
 			break;
 		default:
-			sendPrivateMessage(server_name, sender, "Unknow command " + command);
+			sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue, "Unknow command " + command);
 
 break; } break; default: break; }}}
 ////////////////////////////////////////////////////////////////////////////////
@@ -326,6 +309,10 @@ break; } break; default: break; }}}
 ////// OTHERS
 	private final String server_name = "Server";
 	
+	private final String server_red = "255";
+	private final String server_green = "0";
+	private final String server_blue = "0";
+	
 ////////////////////////////////////////////////////////////////////
 //// GET TIME //////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -360,7 +347,7 @@ public void sendKey(String name) {
 ////////////////////////////////////////////////////////////////////
 //// SEND PRIVATE MESSAGE //////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-public void sendPrivateMessage(String sender, String receiver, String content) {
+public void sendPrivateMessage(String sender, String sender_red, String sender_green, String sender_blue, String receiver, String receiver_red, String receiver_green, String receiver_blue, String content) {
 	
 
 	String time = this.getActualTime();
@@ -369,7 +356,17 @@ public void sendPrivateMessage(String sender, String receiver, String content) {
 	String xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 	+ "<private>"
 	+		"<sender>" + sender + "</sender>"
+	
+	+		"<sender-red>" + sender_red + "</sender-red>"
+	+		"<sender-green>" + sender_green + "</sender-green>"
+	+		"<sender-blue>" + sender_blue + "</sender-blue>"
+		
 	+		"<receiver>" + receiver + "</receiver>"
+	
+	+		"<receiver-red>" + receiver_red + "</receiver-red>"
+	+		"<receiver-green>" + receiver_green + "</receiver-green>"
+	+		"<receiver-blue>" + receiver_blue + "</receiver-blue>"
+	
 	+		"<time>" +  this.getActualTime() + "</time>"
 	+		"<content>" + content + "</content>"
 	+ "</private>";
@@ -381,6 +378,13 @@ public void sendPrivateMessage(String sender, String receiver, String content) {
 		String encrypted_message = client.aes.encrypt(xml_message);
 		client.out.println(encrypted_message);
 		client.out.flush();
+		
+		if(!sender.equals(server_name)) {
+			client = clients.get(sender);
+			encrypted_message = client.aes.encrypt(xml_message);
+			client.out.println(encrypted_message);
+			client.out.flush();
+		}
 	} catch (Exception error) { error.printStackTrace(); }
 	mutex.unlock();
 
@@ -389,7 +393,8 @@ public void sendPrivateMessage(String sender, String receiver, String content) {
 ////////////////////////////////////////////////////////////////////
 //// SEND PUBLIC MESSAGE ///////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-public void sendPublicMessage(String sender, String content){
+public void sendPublicMessage(String sender, String red, String green, String blue, String content){
+	
 	
 	String time = this.getActualTime();
 
@@ -397,10 +402,15 @@ public void sendPublicMessage(String sender, String content){
 	String xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 	+ "<public>"
 	+		"<sender>" + sender + "</sender>"
+	
+	+		"<sender-red>" + red + "</sender-red>"
+	+		"<sender-green>" + green + "</sender-green>"
+	+		"<sender-blue>" + blue + "</sender-blue>"
+	
 	+		"<time>" +  this.getActualTime() + "</time>"
 	+		"<content>" + content + "</content>"
 	+ "</public>";
-	
+		
 	mutex.lock();
 	for (Client client : clients.values()) {
 		try {
@@ -410,17 +420,18 @@ public void sendPublicMessage(String sender, String content){
 		} catch (Exception error) { error.printStackTrace(); }			
 	}
 	mutex.unlock();
+
+	
 }
-		
 ////////////////////////////////////////////////////////////////////
 //// CREATE SERVER /////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 public Server() {
-
+	
 	
 	try { server = new ServerSocket(55555); }
 	catch(IOException error) { error.printStackTrace(); System.exit(-1); }
-	System.out.println("server launch!");
+	System.out.println("Server launch!");
 	
 		
 ////////////////////////////////////////////////////////////////////
@@ -438,7 +449,7 @@ thread_connect = new Thread(new Runnable() { @Override public void run() { while
 	client.aes.generateKey();
 	System.out.println(client.name + " enter the chat");
 	mutex.unlock();
-	sendPublicMessage(server_name, client.name + " enter the chat");
+	sendPublicMessage(server_name, server_red, server_green, server_blue, client.name + " enter the chat");
 	
 	sendKey(client.name);
 
@@ -454,7 +465,7 @@ thread_send = new Thread(new Runnable() {
 		
 		
 		message = scanner.nextLine();
-		sendPublicMessage(server_name, message);
+		sendPublicMessage(server_name, server_red, server_green, server_blue, message);
 
 
 }}}); thread_send.start(); }
