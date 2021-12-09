@@ -11,7 +11,9 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Vector;
@@ -24,6 +26,10 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -33,11 +39,21 @@ import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-
+import java.awt.BorderLayout;
 ////// COLOR
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.ScrollPane;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 
 @SuppressWarnings("unused")
@@ -234,6 +250,271 @@ public class Client {
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+	
+public class Window extends Frame implements WindowListener, KeyListener {
+	private static final long serialVersionUID = 1L;
+
+////////////////////////////////////////////////////////////////////
+//// COLORS ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+private static final Color background_color = new Color(14, 15, 15);
+
+private static final Color date_color = new Color(130, 130, 130);
+private static final Color message_color = new Color(230, 230, 230);
+
+////////////////////////////////////////////////////////////////////////////////
+//// MESSAGE ///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+private class Message extends JPanel {
+	
+/*-----------------------------------------------------------------------------|
+||----------------|----------------|------------------------------------------||
+||      NAME      |      DATE      |                   SPACE                  ||
+||----HEAD--------|----HEAD--------|----HEAD----------------------------------||
+|----THIS----------------------------------------------------------------------|
+|                                                                              |
+|                                  MESSAGE                                     |
+|                                                                              |
+|----THIS---------------------------------------------------------------------*/
+		
+////////////////////////////////////////////////////////////////////
+//// VISUAL ELEMENTS ///////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+		
+private final Panel head = new Panel();
+private final JLabel label_name;
+private final JLabel label_date;
+private final JLabel space = new JLabel("  ");
+
+private final JTextArea textarea_message;
+
+////////////////////////////////////////////////////////////////////
+//// ATTRIBUTES ////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+		
+private final String name;
+private final Color name_color;
+
+private final String date;
+
+private final String message;
+private final String encrypted_message;
+
+private boolean is_encrypted = false;
+		
+////////////////////////////////////////////////////////////////////
+//// CONSTRUCTOR ///////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+public Message(String name, String date, Color name_color, String message, String encrypted_message){
+
+
+	this.name = name;
+	this.date = date;
+	this.name_color = name_color;
+	this.message = message;
+	this.encrypted_message = encrypted_message;
+	
+	this.setLayout(new BorderLayout());
+	
+	label_name = new JLabel(name);
+	label_name.setAlignmentX(LEFT_ALIGNMENT);
+	label_name.setAlignmentY(CENTER_ALIGNMENT);
+	
+	label_date = new JLabel(date);
+	label_date.setAlignmentX(LEFT_ALIGNMENT);
+	label_date.setAlignmentY(CENTER_ALIGNMENT);
+	
+	space.setAlignmentX(LEFT_ALIGNMENT);
+	space.setAlignmentY(CENTER_ALIGNMENT);
+	
+	head.setLayout(new BoxLayout(head, BoxLayout.X_AXIS));
+	head.add(label_name);
+	head.add(space);
+	head.add(label_date);
+	
+	this.add(head, BorderLayout.NORTH);
+	
+	// TEXT AREA
+	textarea_message = new JTextArea(message, 1, 1);
+	textarea_message.setEditable(false);
+	textarea_message.setColumns(60);
+
+	textarea_message.setLineWrap(true);
+	textarea_message.setWrapStyleWord(true);
+	
+	this.add(textarea_message, BorderLayout.SOUTH);
+	this.setMaximumSize(new Dimension(450, 100));
+	
+	// COLORS
+	this.setBackground(background_color);
+	
+	label_name.setForeground(name_color);
+	label_date.setForeground(date_color);
+
+	textarea_message.setBackground(background_color);
+	textarea_message.setForeground(message_color);
+	
+	
+}
+////////////////////////////////////////////////////////////////////
+//// SWITCH ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+public void setIsEncrypted(boolean is_encrypted) {
+
+	
+	this.is_encrypted = is_encrypted;
+	
+	if(this.is_encrypted) textarea_message.setText(encrypted_message);
+	else textarea_message.setText(message);
+
+
+}}
+////////////////////////////////////////////////////////////////////////////////
+//// WINDOW ////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+	
+/*-----------------------------------------------------------------------------|
+||----------------------------------------------------------------------------||
+|||--------------------------------------------------------------------------|||
+||||------------------------------------------------------------------------||||
+|||||----------------------------------------------------------------------|||||
+|||||                               SPACE                                  |||||
+|||||----------------------------------------------------------------------|||||
+||||                                                                        ||||
+||||                                                                        ||||
+||||                                                                        ||||
+||||                                                                        ||||
+||||                                                                        ||||
+||||                                                                        ||||
+||||                              ALL MESSAGES                              ||||
+||||                                                                        ||||
+||||                                                                        ||||
+||||                                                                        ||||
+||||                                                                        ||||
+||||                                                                        ||||
+||||                                                                        ||||
+||||----MAIN----------------------------------------------------------------||||
+|||----BODY------------------------------------------------------------------|||
+|||                                 INPUT                                    |||
+|||----BODY------------------------------------------------------------------|||
+||----SCROLLPANE---------------------------------------------------------------|
+|----WINDOWCHAT---------------------------------------------------------------*/
+	
+	private final Client client;
+
+	private boolean is_encrypted = false;
+	private boolean is_cleaned = true;
+	
+	private final Panel body = new Panel();
+	
+	private final ScrollPane scroll_pane = new ScrollPane(ScrollPane.SCROLLBARS_ALWAYS);
+	private final Panel main = new Panel();
+	private final Label space = new Label();
+	
+	private final JTextArea input = new JTextArea();
+	
+	private final ArrayList<Message> messages = new ArrayList<Message>();
+	
+	public void addMessage(String name, String date, Color name_color, String text, String encrypted_text){
+		Message message = new Message(name, date, name_color, text, encrypted_text);
+		message.setAlignmentX(LEFT_ALIGNMENT);
+		message.setAlignmentY(BOTTOM_ALIGNMENT);
+		
+		messages.add(message);
+		main.add(message);
+		this.pack();
+	}
+	
+	public void setIsEncrypted(boolean is_encrypted){
+		this.is_encrypted = is_encrypted;
+		
+		for (Iterator<Message> iterator = messages.iterator(); iterator.hasNext();)
+			((Message) iterator.next()).setIsEncrypted(is_encrypted);
+	}
+	
+	public Window(Client client){
+		super();
+		
+		this.client = client;
+		
+		body.setLayout(new BorderLayout());
+		
+		main.setBackground(background_color);
+		main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
+		main.add(space);
+		scroll_pane.add(main);
+		
+		input.setBackground(background_color);
+		input.setForeground(message_color);
+		input.setRows(3);
+		
+		body.add(scroll_pane, BorderLayout.CENTER);		
+		body.add(input, BorderLayout.SOUTH);
+		this.add(body);
+
+		this.setUndecorated(true);
+		this.pack();
+		
+		this.setSize(500, 500);
+		this.setResizable(true);
+		
+		this.addWindowListener(this);
+		input.addKeyListener(this);
+		
+		this.setVisible(true);
+	}
+
+////////////////////////////////////////////////////////////////////////////////
+//// EVENTS ////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+////// WINDOW
+@Override
+public void windowOpened(WindowEvent e) {}
+@Override
+public void windowClosing(WindowEvent e) { System.exit(1); }
+@Override
+public void windowClosed(WindowEvent e) {}
+@Override
+public void windowIconified(WindowEvent e) {}
+@Override
+public void windowDeiconified(WindowEvent e) {}
+@Override
+public void windowActivated(WindowEvent e) {}
+@Override
+public void windowDeactivated(WindowEvent e) {}
+	
+////// KEY
+@Override
+public void keyTyped(KeyEvent e) {}
+@Override
+public void keyPressed(KeyEvent e) {
+	if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+		String message = input.getText();
+		
+		client.sendMessage(message);
+		
+		input.setText("");
+		is_cleaned = false;
+	}
+}
+@Override
+public void keyReleased(KeyEvent e) {
+	if(!is_cleaned) {
+		is_cleaned = true;
+		input.setText("");
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+}
+	
 	CleAES aes = new CleAES();
 	DiffieHellMan securiteInitial = new DiffieHellMan();
 
@@ -255,6 +536,9 @@ public class Client {
 	Socket echoSocket = null;
 	PrintWriter out  = null;
 	BufferedReader in = null;
+	
+////// WINDOW
+	Window window = new Window(this);
 
 	//la lecture des messages qui vont être envoyé
 	final Scanner scanner = new Scanner(System.in);
@@ -361,7 +645,7 @@ private final void sendMessage(String message) {
 					+ 		"<red>" + command[1] + "</red>"
 					+ 		"<green>" + command[2] + "</green>"
 					+ 		"<blue>" + command[3] + "</blue>"
-					+ "</rename></color>";
+					+ "</color></command>";
 			
 			break;
 		case "/private":
@@ -437,8 +721,9 @@ private final void readMessage(String message, String encrypted_message) {
 		sender_color = new Color(Integer.parseInt(sender_red), Integer.parseInt(sender_green), Integer.parseInt(sender_blue));
 		
 		System.out.println(time + " | " + sender + " -> " + "everyone" + " : " + content);
+		
 		// TODO : CONNECTION WITH WINDOW like :
-		// window.addPublicMessage(sender, time, sender_color, content, encrypted_message);
+		window.addMessage(sender, time, sender_color, content, encrypted_message);
 		break;
 	case "private":
 ////// PRIVATE MESSAGE
