@@ -178,21 +178,7 @@ public class Server {
 									
 									System.out.println(name + " : /" + message);
 								} else { // message publique :
-									message = "<@" + name + ">" + message;
-									System.out.println(message);
-									
-									
-									mutex.lock();
-									// send to everyone :
-									for (Client other_client : clients.values()) {
-										String other_client_message = "";
-										try { other_client_message = other_client.aes.encrypt(message);
-										} catch (Exception error) { error.printStackTrace(); }
-										other_client.out.println(other_client_message);
-										other_client.out.flush();
-									}
-									mutex.unlock();
-									
+									sendPublicMessage(name, message);
 								}
 							} else {
 								// supprimer le client!
@@ -250,7 +236,7 @@ public class Server {
 		try {
 			Client client = clients.get(receiver);
 			String encrypted_message = client.aes.encrypt(full_message);
-			client.out.println(message);
+			client.out.println(encrypted_message);
 			client.out.flush();
 		} catch (Exception error) { error.printStackTrace(); }
 		mutex.unlock();
@@ -258,12 +244,13 @@ public class Server {
 	
 	public void sendPublicMessage(String name, String message){
 		String full_message = "<#public>" + "<@" + name + ">" + "<&" + this.getActualTime() + ">" + message;
+		System.out.println(full_message);
 		
 		mutex.lock();
 		for (Client client : clients.values()) {
 			try {
 				String encrypted_message = client.aes.encrypt(full_message);
-				client.out.println(message);
+				client.out.println(encrypted_message);
 				client.out.flush();
 			} catch (Exception error) { error.printStackTrace(); }			
 		}
