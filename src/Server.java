@@ -10,7 +10,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Scanner;
 
 ////// MUTEX
@@ -25,9 +24,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import java.io.StringReader;
@@ -148,6 +144,8 @@ private class Client {
 	String red = "0";
 	String green = "230";
 	String blue = "230";
+	private final boolean isBetween0And255(int value) { return 0 <= value && value <= 255; }
+
 			
 ////////////////////////////////////////////////////////////////////
 //// INITIALISATION ////////////////////////////////////////////////
@@ -188,22 +186,14 @@ thread_receive = new Thread(new Runnable() {
 	
 } catch (IOException error) { error.printStackTrace(); return; }
 }}}); thread_receive.start(); }
-
-/*
-out.println("===========================================================");
-out.println("All commands :");
-out.println();
-out.println("/help                          show this help");
-out.println("/rename [NAME]                 change your name");
-out.println("/color [RED] [GREEN] [BLUE]    change your colorname");
-out.println("/private [NAME] [TEXT]         send private message to user");
-out.println("===========================================================");
-out.flush();
-*/
+	
+	
 ////////////////////////////////////////////////////////////////////
 //// READ MESSAGE //////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////	
 private final void read(String message) {	
+	
+	
 	Client sender = clients.get(name);
 	Client receiver;
 	String receiver_name = "";
@@ -244,7 +234,14 @@ private final void read(String message) {
 		switch (command) {
 		case "help":
 			sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue,
-					"HELP"
+					         "==========================================================="
+					+ "\n" + "All commands :"
+					+ "\n"
+					+ "\n" + "/help                          show this help"
+					+ "\n" + "/rename [NAME]                 change your name"
+					+ "\n" + "/color [RED] [GREEN] [BLUE]    change your colorname"
+					+ "\n" + "/private [NAME] [TEXT]         send private message to user"
+					+ "\n" + "==========================================================="
 			);
 			break;
 		case "rename":
@@ -262,6 +259,22 @@ private final void read(String message) {
 			break;
 		case "color":
 			// TODO
+			
+			String sender_red = root.getElementsByTagName("red").item(0).getTextContent();
+			String sender_green = root.getElementsByTagName("green").item(0).getTextContent();
+			String sender_blue = root.getElementsByTagName("blue").item(0).getTextContent();
+			try {
+				if(isBetween0And255(Integer.parseInt(sender_red)) && isBetween0And255(Integer.parseInt(sender_green)) && isBetween0And255(Integer.parseInt(sender_blue))) {
+					sender.red = sender_red;
+					sender.green = sender_green;
+					sender.blue = sender_blue;
+					
+					sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue, "Your color changes to " + sender.red + " " + sender.green + " " + sender.red);
+				} else
+					sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue, "Cannot change your color to " + sender_red + " " + sender_green + " " + sender_red);
+			} catch (NumberFormatException error) {
+				sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue, "Cannot change your color to " + sender_red + " " + sender_green + " " + sender_red);
+			}
 			break;
 		case "private":
 			receiver_name = root.getElementsByTagName("receiver").item(0).getTextContent();
@@ -340,6 +353,10 @@ public void sendDiffieHellmanKey(String name) {
 			+ "<diffiehellman>"
 			+		"<key>" + "KEY" + "</key>"
 			+ "/diffiehellman";
+	
+	client.out.println(xml_message);
+	client.out.flush();
+	mutex.unlock();
 	
 }
 ////////////////////////////////////////////////////////////////////
@@ -462,7 +479,7 @@ thread_connect = new Thread(new Runnable() { @Override public void run() { while
 	Socket socket = server.accept();
 	
 	mutex.lock();
-	Client client = new Client(socket, "user" + String.valueOf(clientCounter++));
+	Client client = new Client(socket, "User" + String.valueOf(clientCounter++));
 	clients.put(client.name, client);
 	
 	client.aes.generateKey();
