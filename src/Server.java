@@ -67,10 +67,13 @@ private final class AES {
     private byte[] table;
     
     public void generateKey(BigInteger cleFinale) {
+    	System.out.println("pouet");
+    	System.out.println(cleFinale);
+    	
         try { generator = KeyGenerator.getInstance("AES"); } catch (NoSuchAlgorithmException error) { error.printStackTrace(); }
         SecureRandom random = new SecureRandom(cleFinale.toByteArray());
         generator.init(256, random);
-        key = generator.generateKey();
+        this.key = generator.generateKey();
         
         table = new byte[16];
         new SecureRandom(cleFinale.toByteArray()).nextBytes(table);
@@ -304,12 +307,7 @@ securiteInitial.setClePrimaire(new BigInteger(clePrimaire));
 securiteInitial.setClePrimaireRacine(new BigInteger(clePrimaireRacine));
 securiteInitial.genCleSecrete();
 
-BigInteger toServeur = securiteInitial.toServeur(securiteInitial.cleSecrete);
-String xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-+ "<diffiehellman>"
-+		"<key>" + toServeur.toString() + "</key>"
-+ "/diffiehellman";
-out.flush();
+sendDiffieHellmanKey(n);
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////
@@ -318,7 +316,7 @@ out.flush();
 		
 		String message = "";
 		try {message = in.readLine();} catch (IOException e) {}
-		while(waitKey(message)) {
+		while(!waitKey(name, message)) {
 			
 		}
 		
@@ -493,7 +491,7 @@ break; } break; default: break; }}}
 ////////////////////////////////////////////////////////////////////////////////
 ////WAIT KEY //////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-private boolean waitKey(String message) {
+private boolean waitKey(String name, String message) {
 
 
 	DocumentBuilder document_builder = null;
@@ -502,7 +500,7 @@ private boolean waitKey(String message) {
 	DocumentBuilderFactory document_builder_factory = DocumentBuilderFactory.newInstance();
 	try { document_builder = document_builder_factory.newDocumentBuilder(); } catch (ParserConfigurationException error) { return false; }
 	try { document = document_builder.parse(new InputSource(new StringReader(message))); } catch (SAXException | IOException error) { return false; }
-
+	
 	document.getDocumentElement().normalize();
 	Element root = document.getDocumentElement();
 	String root_name = root.getNodeName();
@@ -511,9 +509,14 @@ private boolean waitKey(String message) {
 		String key = root.getElementsByTagName("key").item(0).getTextContent();
 
 
-		securiteInitial.bobCalculationOfKey(new BigInteger("key"), securiteInitial.cleSecrete);
+		securiteInitial.bobCalculationOfKey(new BigInteger(key), securiteInitial.cleSecrete);
+		System.out.println(securiteInitial.cleFinale);
 		return true;
 	}
+	
+	Client client = clients.get(name);
+	client.aes.generateKey(securiteInitial.cleFinale);
+	
 /*
 if(root_name.equals("aes")) {
 String key = root.getElementsByTagName("key").item(0).getTextContent();
@@ -550,12 +553,16 @@ public void sendDiffieHellmanKey(String name) {
 	mutex.lock();
 	Client client = clients.get(name);
 
+	BigInteger toClient = securiteInitial.toClient(securiteInitial.cleSecrete);
 	String xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 			+ "<diffiehellman>"
-			+		"<key>" + "KEY" + "</key>"
-			+ "/diffiehellman";
+			+		"<key>" + toClient.toString() + "</key>"
+			+ "</diffiehellman>";
+	
+	System.out.println("toClient " + toClient);
 	
 	client.out.println(xml_message);
+	
 	client.out.flush();
 	mutex.unlock();
 	
@@ -685,12 +692,13 @@ thread_connect = new Thread(new Runnable() { @Override public void run() { while
 	Client client = new Client(socket, "User" + String.valueOf(clientCounter++));
 	clients.put(client.name, client);
 	
-	client.aes.generateKey(securiteInitial.cleFinale);
 	System.out.println(client.name + " enter the chat");
 	mutex.unlock();
-	sendPublicMessage(server_name, server_red, server_green, server_blue, client.name + " enter the chat");
+	// TODO : ENVOYER CE MESSAGE QUAND TOUS LES CLIENTS AURONT LA BONNE CLEF
+	//sendPublicMessage(server_name, server_red, server_green, server_blue, client.name + " enter the chat");
 	
-	sendAesKey(client.name);
+	// TODO : A SUPPRIMER AVEC LA FONCTION
+	//sendAesKey(client.name);
 
 	
 } catch (IOException error) { error.printStackTrace(); } }}}); thread_connect.start();	

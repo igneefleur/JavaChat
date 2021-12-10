@@ -314,6 +314,10 @@ public class Client {
 			//// VISUAL ELEMENTS ///////////////////////////////////////////////
 			////////////////////////////////////////////////////////////////////
 
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
 			private final Panel head = new Panel();
 			private final JLabel sender_label;
 			private final JLabel arrow_label = new JLabel("  ->  ");
@@ -703,8 +707,9 @@ public class Client {
 			String key = root.getElementsByTagName("key").item(0).getTextContent();
 			
 
-			securiteInitial.aliceCalculationOfKey(new BigInteger("key"), securiteInitial.cleSecrete);
+			securiteInitial.aliceCalculationOfKey(new BigInteger(key), securiteInitial.cleSecrete);
 			aes.generateKey(securiteInitial.cleFinale);
+			System.out.println(securiteInitial.cleFinale);
 			return true;
 		}
 		/*
@@ -938,7 +943,12 @@ public class Client {
 			String xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 					+ "<diffiehellman>"
 					+		"<key>" + toServeur.toString() + "</key>"
-					+ "/diffiehellman";
+					+ "</diffiehellman>";
+			
+			
+			System.out.println("toServeur " + toServeur);
+			
+			out.println(xml_message);
 			out.flush();
 			////////////////////////////////////////////////////////////
 			////////////////////////////////////////////////////////////
