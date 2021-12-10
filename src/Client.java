@@ -875,10 +875,17 @@ public class Client {
 			connexion = new Thread(new Runnable() {
 				@Override
 				public void run() {
+					LocalTime temps = LocalTime.now();
+					Integer memo = 1;
 					while(echoSocket == null) {
-						try {echoSocket = new Socket(lien,port);} 
-						catch (UnknownHostException e) {System.out.println("Chat : [Error] - L'hôte est inconnu : "+e); echoSocket =null;/*e.printStackTrace();*/}
-						catch (IOException e) {System.out.println("Chat : [Error] - La connexion ne peut pas être établi : "+e); echoSocket =null;/*e.printStackTrace();*/}
+						Integer moment = avoirLesSecondes(temps);
+						if ( moment != memo) {
+							try {echoSocket = new Socket(lien,port);}
+							catch (UnknownHostException e) {System.out.println("Chat : [Error] - L'hôte est inconnu : "+e); echoSocket =null;/*e.printStackTrace();*/}
+							catch (IOException e) {System.out.println("Chat : [Error] - La connexion ne peut pas être établi : "+e); echoSocket =null;/*e.printStackTrace();*/}
+							memo = moment;
+						}
+						
 					}
 					
 				}

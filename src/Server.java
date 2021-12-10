@@ -10,8 +10,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Scanner;
-
+import java.util.Vector;
 ////// MUTEX
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -26,8 +27,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import java.io.StringReader;
 
+import java.io.StringReader;
+import java.math.BigInteger;
 ////// AES
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -64,14 +66,14 @@ private final class AES {
     
     private byte[] table;
     
-    public void generateKey() {
+    public void generateKey(BigInteger cleFinale) {
         try { generator = KeyGenerator.getInstance("AES"); } catch (NoSuchAlgorithmException error) { error.printStackTrace(); }
-        SecureRandom random = new SecureRandom();
+        SecureRandom random = new SecureRandom(cleFinale.toByteArray());
         generator.init(256, random);
         key = generator.generateKey();
         
         table = new byte[16];
-        new SecureRandom().nextBytes(table);
+        new SecureRandom(cleFinale.toByteArray()).nextBytes(table);
         this.vector = new IvParameterSpec(table);
     }
     
@@ -119,6 +121,130 @@ private final class AES {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+////Diffie-Hellmann ////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+private class PrimeNumberGen {
+	private long n;
+	public long getPrimeNumber(){
+		this.n = (int)(new Random().nextDouble()*100)+250;
+		long l = 0;
+		l = (long) ((this.n)*(Math.log(this.n) + (Math.log(Math.log(this.n)) -1) + ((Math.log(Math.log(this.n))-2)/(Math.log(this.n))) - ((Math.log(Math.log(this.n)) -21.0/10.0)/Math.log(this.n)) ));
+		for(long i=l;;i++){
+			if(isPrime(i)){
+				return i;
+			}
+		}
+	}/////////////////////////////////////////////////   
+	private boolean isPrime(long n){
+		if(n%2 == 0 || n%3 == 0) return false;
+		for(int i=5; i*i<=n; i+=6){
+			if(n%i == 0 || n%(i+2)==0) return false;
+		}
+		return true;
+	}
+}
+
+public class PrimitiveRootGen {
+	long pr, clePrimaire, phi;
+	public PrimitiveRootGen(long clePrimaire){
+		this.clePrimaire = clePrimaire;
+		this.phi = this.clePrimaire - 1;
+		Vector<Long> primitiveRoots =  this.getPrimitiveRoot(this.clePrimaire, this.phi);
+		this.pr = primitiveRoots.get(new Random().nextInt(primitiveRoots.size()));
+	}
+
+	public long getPr() {
+		return pr;
+	}
+
+	private Vector<Long> getPrimitiveRoot(long clePrimaire, long phi){
+		Vector<Long> primeFactors = this.genPrimesFactorsList(phi);
+		Vector<Long> primitiveRoots = new Vector<>();
+		for(long i = 2;i<clePrimaire;i++){
+			boolean flg = false;
+			for(Long l: primeFactors){
+				BigInteger iBig = BigInteger.valueOf(i);
+				BigInteger phiBig = BigInteger.valueOf(phi/l);
+				BigInteger pBig = BigInteger.valueOf(clePrimaire);
+				BigInteger pRootBig = iBig.modPow(phiBig, pBig);
+				if(pRootBig.compareTo(BigInteger.valueOf(1))==0){
+					flg = true;
+					break;
+				}
+			}
+			if(!flg)primitiveRoots.add(i);
+		}
+		return primitiveRoots;
+	}
+
+	private Vector<Long> genPrimesFactorsList(long phi){
+		Vector<Long> primesFactors = new Vector<>();
+		while(phi % 2 == 0){
+			primesFactors.add((long) 2);
+			phi /= 2;
+		}
+		for(long i=3;i<=Math.sqrt(phi);i+=2){
+			if(phi % i == 0){
+				primesFactors.add(i);
+				phi /= i;
+			}
+		}
+		if(phi > 2){
+			primesFactors.add(phi);
+		}
+		return primesFactors;
+	}
+}
+
+private class DiffieHellMan{
+	BigInteger clePrimaire, clePrimaireRacine;
+	BigInteger cleSecrete;
+	BigInteger cleFinale;
+
+	public void genClePrimaireEtRacine(){
+		this.clePrimaire = BigInteger.valueOf(new PrimeNumberGen().getPrimeNumber());
+		this.clePrimaireRacine = BigInteger.valueOf(new PrimitiveRootGen(this.clePrimaire.intValue()).getPr());
+	}
+	
+	public void genCleSecrete(){
+		this.cleSecrete = BigInteger.valueOf(new PrimeNumberGen().getPrimeNumber());
+	}
+
+	public BigInteger getClePrimaire() {
+		return clePrimaire;
+	}
+
+	public void setClePrimaireRacine(BigInteger a) {
+		this.clePrimaireRacine = a;
+	}
+	
+	public void setClePrimaire(BigInteger a) {
+		this.clePrimaire = a;
+	}
+
+	public BigInteger getClePrimaireRacine() {
+		return clePrimaireRacine;
+	}
+
+	public BigInteger toServeur(BigInteger cleSecreteClient){
+		return this.clePrimaireRacine.modPow(cleSecreteClient, this.clePrimaire);
+	}
+
+	public BigInteger toClient(BigInteger cleSecreteServeur){
+		return this.clePrimaireRacine.modPow(cleSecreteServeur, this.clePrimaire);
+	}
+
+	public void aliceCalculationOfKey (BigInteger toClient, BigInteger cleSecreteClient){
+		cleFinale =  toClient.modPow(cleSecreteClient, this.clePrimaire);
+	}
+
+	public void bobCalculationOfKey(BigInteger toServeur, BigInteger cleSecreteServeur){
+		cleFinale =  toServeur.modPow(cleSecreteServeur, this.clePrimaire);
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
 //// CLIENT ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 private class Client {
@@ -146,6 +272,7 @@ private class Client {
 	String blue = "230";
 	private final boolean isBetween0And255(int value) { return 0 <= value && value <= 255; }
 
+
 			
 ////////////////////////////////////////////////////////////////////
 //// INITIALISATION ////////////////////////////////////////////////
@@ -166,7 +293,36 @@ thread_receive = new Thread(new Runnable() {
 
 	String encrypted_message = "";
 	String decrypted_message = "";
-	@Override public void run() { while(true) { try {
+	@Override public void run() { 
+		
+		
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+//Construction des clés pour Diffi-Hellman
+securiteInitial.setClePrimaire(new BigInteger(clePrimaire)); 
+securiteInitial.setClePrimaireRacine(new BigInteger(clePrimaireRacine));
+securiteInitial.genCleSecrete();
+
+BigInteger toServeur = securiteInitial.toServeur(securiteInitial.cleSecrete);
+String xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
++ "<diffiehellman>"
++		"<key>" + toServeur.toString() + "</key>"
++ "/diffiehellman";
+out.flush();
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+		
+		
+		
+		String message = "";
+		try {message = in.readLine();} catch (IOException e) {}
+		while(waitKey(message)) {
+			
+		}
+		
+		while(true) { try {
 
 
 		encrypted_message = in.readLine();
@@ -322,12 +478,57 @@ break; } break; default: break; }}}
 	private final Scanner scanner = new Scanner(System.in);
 
 ////// OTHERS
+	private DiffieHellMan securiteInitial = new DiffieHellMan();
 	private final String server_name = "Server";
 	
 	private final String server_red = "255";
 	private final String server_green = "0";
 	private final String server_blue = "0";
 	
+	//Cle pour DiffiHellman
+	String clePrimaire = "1867";
+	String clePrimaireRacine = "934";
+
+	
+////////////////////////////////////////////////////////////////////////////////
+////WAIT KEY //////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+private boolean waitKey(String message) {
+
+
+	DocumentBuilder document_builder = null;
+	Document document = null;
+
+	DocumentBuilderFactory document_builder_factory = DocumentBuilderFactory.newInstance();
+	try { document_builder = document_builder_factory.newDocumentBuilder(); } catch (ParserConfigurationException error) { return false; }
+	try { document = document_builder.parse(new InputSource(new StringReader(message))); } catch (SAXException | IOException error) { return false; }
+
+	document.getDocumentElement().normalize();
+	Element root = document.getDocumentElement();
+	String root_name = root.getNodeName();
+
+	if(root_name.equals("diffiehellman")) {
+		String key = root.getElementsByTagName("key").item(0).getTextContent();
+
+
+		securiteInitial.bobCalculationOfKey(new BigInteger("key"), securiteInitial.cleSecrete);
+		return true;
+	}
+/*
+if(root_name.equals("aes")) {
+String key = root.getElementsByTagName("key").item(0).getTextContent();
+String vector = root.getElementsByTagName("vector").item(0).getTextContent();
+
+aes.setKey(key);
+aes.setIv(vector);
+
+return true;
+}*/
+
+return false;
+
+
+}
 ////////////////////////////////////////////////////////////////////
 //// GET TIME //////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -469,7 +670,9 @@ public Server() {
 	catch(IOException error) { error.printStackTrace(); System.exit(-1); }
 	System.out.println("Server launch!");
 	
-		
+	
+
+
 ////////////////////////////////////////////////////////////////////
 //// THREAD CONNECT CLIENTS ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -482,7 +685,7 @@ thread_connect = new Thread(new Runnable() { @Override public void run() { while
 	Client client = new Client(socket, "User" + String.valueOf(clientCounter++));
 	clients.put(client.name, client);
 	
-	client.aes.generateKey();
+	client.aes.generateKey(securiteInitial.cleFinale);
 	System.out.println(client.name + " enter the chat");
 	mutex.unlock();
 	sendPublicMessage(server_name, server_red, server_green, server_blue, client.name + " enter the chat");
