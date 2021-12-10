@@ -329,9 +329,23 @@ public String getActualTime() {
 
 }
 ////////////////////////////////////////////////////////////////////
+////// SEND NUMBER /////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+public void sendDiffieHellmanKey(String name) {
+	
+	mutex.lock();
+	Client client = clients.get(name);
+
+	String xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+			+ "<diffiehellman>"
+			+		"<key>" + "KEY" + "</key>"
+			+ "/diffiehellman";
+	
+}
+////////////////////////////////////////////////////////////////////
 //// SEND KEY //////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-public void sendKey(String name) {
+public void sendAesKey(String name) {
 
 	
 	mutex.lock();
@@ -456,7 +470,7 @@ thread_connect = new Thread(new Runnable() { @Override public void run() { while
 	mutex.unlock();
 	sendPublicMessage(server_name, server_red, server_green, server_blue, client.name + " enter the chat");
 	
-	sendKey(client.name);
+	sendAesKey(client.name);
 
 	
 } catch (IOException error) { error.printStackTrace(); } }}}); thread_connect.start();	
