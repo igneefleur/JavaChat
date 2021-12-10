@@ -71,6 +71,18 @@ public class Client {
 		private SecretKey cleSecrete;
 		private IvParameterSpec initialVector;
 		private String algo= "AES/CBC/PKCS5Padding";
+		private byte[] table;
+		
+		public void generateKey(BigInteger cleFinale) {
+	        try { cleGen = KeyGenerator.getInstance("AES"); } catch (NoSuchAlgorithmException error) { error.printStackTrace(); }
+	        SecureRandom random = new SecureRandom(cleFinale.toByteArray());
+	        cleGen.init(256, random);
+	        cleSecrete = cleGen.generateKey();
+	        
+	        table = new byte[16];
+	        new SecureRandom(cleFinale.toByteArray()).nextBytes(table);
+	        this.initialVector = new IvParameterSpec(table);
+	    }
 
 		public void setKey(String cleSecrete) {
 			byte[] decodedKey = Base64.getDecoder().decode(cleSecrete);
@@ -218,14 +230,28 @@ public class Client {
 
 	private class DiffieHellMan{
 		BigInteger clePrimaire, clePrimaireRacine;
+		BigInteger cleSecrete;
+		BigInteger cleFinale;
 
-		public void getClePrimaireEtRacine(){
+		public void genClePrimaireEtRacine(){
 			this.clePrimaire = BigInteger.valueOf(new PrimeNumberGen().getPrimeNumber());
 			this.clePrimaireRacine = BigInteger.valueOf(new PrimitiveRootGen(this.clePrimaire.intValue()).getPr());
+		}
+		
+		public void genCleSecrete(){
+			this.cleSecrete = BigInteger.valueOf(new PrimeNumberGen().getPrimeNumber());
 		}
 
 		public BigInteger getClePrimaire() {
 			return clePrimaire;
+		}
+
+		public void setClePrimaireRacine(BigInteger a) {
+			this.clePrimaireRacine = a;
+		}
+		
+		public void setClePrimaire(BigInteger a) {
+			this.clePrimaire = a;
 		}
 
 		public BigInteger getClePrimaireRacine() {
@@ -240,12 +266,12 @@ public class Client {
 			return this.clePrimaireRacine.modPow(cleSecreteServeur, this.clePrimaire);
 		}
 
-		public BigInteger aliceCalculationOfKey (BigInteger toClient, BigInteger cleSecreteClient){
-			return toClient.modPow(cleSecreteClient, this.clePrimaire);
+		public void aliceCalculationOfKey (BigInteger toClient, BigInteger cleSecreteClient){
+			cleFinale =  toClient.modPow(cleSecreteClient, this.clePrimaire);
 		}
 
-		public BigInteger bobCalculationOfKey(BigInteger toServeur, BigInteger cleSecreteServeur){
-			return toServeur.modPow(cleSecreteServeur, this.clePrimaire);
+		public void bobCalculationOfKey(BigInteger toServeur, BigInteger cleSecreteServeur){
+			cleFinale =  toServeur.modPow(cleSecreteServeur, this.clePrimaire);
 		}
 	}
 
@@ -264,10 +290,10 @@ public class Client {
 		//// COLORS ////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////
 
-		private static final Color background_color = new Color(14, 15, 15);
+		private final Color background_color = new Color(14, 15, 15);
 
-		private static final Color date_color = new Color(130, 130, 130);
-		private static final Color message_color = new Color(230, 230, 230);
+		private final Color date_color = new Color(130, 130, 130);
+		private final Color message_color = new Color(230, 230, 230);
 
 		////////////////////////////////////////////////////////////////////////////////
 		//// MESSAGE ///////////////////////////////////////////////////////////////////
@@ -593,6 +619,10 @@ public class Client {
 		return message.toLowerCase().equals("bye");
 	};
 
+	//Cle pour DiffiHellman
+	String clePrimaire = "1867";
+	String clePrimaireRacine = "934";
+	
 	//recuperation des cles AES et InitVector
 	Boolean recupKey = true;
 	Boolean recupInitVector = true;
@@ -656,8 +686,8 @@ public class Client {
 	//// WAIT KEY //////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 	private boolean waitKey(String message) {
-
-
+		
+		
 		DocumentBuilder document_builder = null;
 		Document document = null;
 
@@ -668,7 +698,16 @@ public class Client {
 		document.getDocumentElement().normalize();
 		Element root = document.getDocumentElement();
 		String root_name = root.getNodeName();
+		
+		if(root_name.equals("diffiehellman")) {
+			String key = root.getElementsByTagName("key").item(0).getTextContent();
+			
 
+			securiteInitial.aliceCalculationOfKey(new BigInteger("key"), securiteInitial.cleSecrete);
+			aes.generateKey(securiteInitial.cleFinale);
+			return true;
+		}
+		/*
 		if(root_name.equals("aes")) {
 			String key = root.getElementsByTagName("key").item(0).getTextContent();
 			String vector = root.getElementsByTagName("vector").item(0).getTextContent();
@@ -677,7 +716,7 @@ public class Client {
 			aes.setIv(vector);
 
 			return true;
-		}
+		}*/
 
 		return false;
 
@@ -825,7 +864,7 @@ public class Client {
 
 	@SuppressWarnings("deprecation")
 	public Client(String lien,	int port) {
-
+		
 		try {
 			//info serv
 			System.out.println("Chat : [Connecting] - Recherche du serveur.");
@@ -836,14 +875,16 @@ public class Client {
 			connexion = new Thread(new Runnable() {
 				@Override
 				public void run() {
-
-					try {echoSocket = new Socket(lien,port);} 
-					catch (UnknownHostException e) {System.out.println("Chat : [Error] - L'hôte est inconnu : "+e);/*e.printStackTrace();*/}
-					catch (IOException e) {System.out.println("Chat : [Error] - La connexion ne peut pas être établi : "+e);/*e.printStackTrace();*/}
+					while(echoSocket == null) {
+						try {echoSocket = new Socket(lien,port);} 
+						catch (UnknownHostException e) {System.out.println("Chat : [Error] - L'hôte est inconnu : "+e); echoSocket =null;/*e.printStackTrace();*/}
+						catch (IOException e) {System.out.println("Chat : [Error] - La connexion ne peut pas être établi : "+e); echoSocket =null;/*e.printStackTrace();*/}
+					}
+					
 				}
 			});
 			connexion.start();
-
+			window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), "[Connecting] - Recherche en cours...","");
 			//affichage du temps de recherche
 			LocalTime temps = LocalTime.now();
 			Integer memo = 1;
@@ -853,22 +894,46 @@ public class Client {
 					System.out.println("Chat : [Connecting] - Recherche en cours... " +moment.toString()+"s.");
 					memo = moment;
 				}
+				if (memo == 15) {
+					connexion.stop();
+					echoSocket = new Socket();
+					System.out.println("Chat : [Error] - La connexion ne peut pas être établi : veuillez vérifier le port et l'adresse saisie");
+					window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), "[Error] - La connexion ne peut pas être établi : veuillez vérifier le port et l'adresse saisie", "");
+					System.out.println("Chat : [Error] - La connexion ne peut pas être établi : êtes-vous sur le même réseau que le serveur ?");
+					window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), "[Error] - La connexion ne peut pas être établi : êtes-vous sur le même réseau que le serveur ?", "");
+					Quit();
+				}
 			}
 			if (echoSocket != null) {
 				connexion.stop();
+				String textRelationServeur = "[Connected] - La relation au serveur est effectuee.";
+	
+				window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), textRelationServeur, "");
+				System.out.println("Chat : [Connecting] - Serveur trouvé.");
+	
+				//connexion
+				System.out.println("Chat : [Connecting] - Lancement socket.");
 			}
-			
-			String textRelationServeur = "[Connected] - La relation au serveur est effectuee.";
-
-			window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), textRelationServeur, "");
-			System.out.println("Chat : [Connecting] - Serveur trouvé.");
-
-			//connexion
-			System.out.println("Chat : [Connecting] - Lancement socket.");
 			out = new PrintWriter(echoSocket.getOutputStream());
 			in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
 			System.out.println("Chat : [Connecting] - Socket établi");
 			System.out.println("Chat : [Connected]");
+			
+			////////////////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////
+			////////////////////////////////////////////////////////////
+			//Construction des clés pour Diffi-Hellman
+			securiteInitial.setClePrimaire(new BigInteger(clePrimaire)); 
+			securiteInitial.setClePrimaireRacine(new BigInteger(clePrimaireRacine));
+			securiteInitial.genCleSecrete();
+			
+			BigInteger toServeur = securiteInitial.toServeur(securiteInitial.cleSecrete);
+			String xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+					+ "<diffiehellman>"
+					+		"<key>" + toServeur.toString() + "</key>"
+					+ "/diffiehellman";
+			out.flush();
+			////////////////////////////////////////////////////////////
 			////////////////////////////////////////////////////////////
 			////////////////////////////////////////////////////////////
 			//discussion
