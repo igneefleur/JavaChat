@@ -7,10 +7,15 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
+import java.security.spec.KeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -25,7 +30,9 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
@@ -66,117 +73,161 @@ public class Client {
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////
-	private class CleAES {
 
-		private KeyGenerator cleGen; 
-		private SecretKey cleSecrete;
-		private IvParameterSpec initialVector;
-		private String algo= "AES/CBC/PKCS5Padding";
-		private byte[] table;
-		
-		public void generateKey(BigInteger cleFinale) {
-	        try { cleGen = KeyGenerator.getInstance("AES"); } catch (NoSuchAlgorithmException error) { error.printStackTrace(); }
-	        
-	        System.out.println();
-	        
-	        System.out.println("DIFFIEHELLMAN KEY :");
-	        System.out.println(cleFinale);
-	        System.out.println();
-	        
-	        Random random = new Random();
-	        random.setSeed(cleFinale.intValue());
-	        byte[] AESKEY = new byte[16];
-	        
-	        System.out.println("AES KEY :");
-	        System.out.println(Arrays.toString(AESKEY));
-	        System.out.println();
-	        
-	        random.nextBytes(AESKEY);
-	        
-	        System.out.println("AES KEY :");
-	        System.out.println(Arrays.toString(AESKEY));
-	        System.out.println();
-	        
-	        cleGen.init(256, null);
-	        cleSecrete = cleGen.generateKey();
-	        
-	        table = new byte[16];
-	        //new SecureRandom(cleFinale.toByteArray()).nextBytes(table);
-	        
-	        this.initialVector = new IvParameterSpec(table);
+private final class AES {
 
-	        System.out.println(this.getKey());
-	        System.out.println(Arrays.toString(table));
-		}
+	private KeyGenerator cleGen;
+	private SecretKey cleSecrete;
+	private byte[] initialVector;
+	private String algo= "AES/CBC/PKCS5Padding";
+	private ArrayList<Byte> table;
 
-	    public String getKey() { return Base64.getEncoder().encodeToString(cleSecrete.getEncoded()); }
-		public void setKey(String cleSecrete) {
-			byte[] decodedKey = Base64.getDecoder().decode(cleSecrete);
-			SecretKey originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
-			this.cleSecrete = originalKey;
-		}
-		public void setIv(String vecteurInitial) {
-			byte[] vector = new byte[16];
-			int[] entier = new int[16];
-			//decoupage du string
-			vecteurInitial = vecteurInitial.substring(1, vecteurInitial.length()-1);
-			String[] liste = vecteurInitial.split(", ");
-			//passage String to int
-			for (int i = 0; i < liste.length; i++) {
-				entier[i] = Integer.parseInt(liste[i]);
-			}
-			//passage int to byte
-			for (int i = 0; i < liste.length; i++) {
-				vector[i] = ((Integer) entier[i]).byteValue();
-			}
-
-			this.initialVector = new IvParameterSpec(vector);
-		}
+	public void generateKey(BigInteger cleFinale) {
 
 		/*
-		public void genererCle() {
-			//construction de la clé
-			try {cleGen = KeyGenerator.getInstance("AES");} catch (NoSuchAlgorithmException e) {System.out.println("L'AES existe pas"); e.printStackTrace();}
-			SecureRandom alea = new SecureRandom();
-			cleGen.init(256,alea);
-			cleSecrete = cleGen.generateKey();
+		System.out.println(cleFinale);
 
-			//generation de l'initial vector
-			byte[] initialVector = new byte[16];
-			new SecureRandom().nextBytes(initialVector);
-			this.initialVector = new IvParameterSpec(initialVector);
+        try { cleGen = KeyGenerator.getInstance("AES"); } catch (NoSuchAlgorithmException error) { error.printStackTrace(); }
+        SecureRandom random = new SecureRandom();
+        random.setSeed(cleFinale.toByteArray());
+        cleGen.init(256, random);
+        cleSecrete = cleGen.generateKey();
 
+        table = new byte[16];
+        random.nextBytes(table);
+        this.initialVector = new IvParameterSpec(table);
 
-			String key = cleSecrete.getEncoded().toString();
-			//System.out.println(key);
+        System.out.println("Les informations :");
+        System.out.println(Arrays.toString(table));
+        System.out.println(Base64.getEncoder().encodeToString(cleSecrete.getEncoded()));
+        */
+
+		Integer a = cleFinale.intValue();
+		String b = a.toString();
+		char[] password = new char[b.length()];
+		for (int i = 0; i < password.length; i++) {
+			password[i] = b.charAt(i);
 		}
 
+		Random random = new Random(a);
 
 
-		public IvParameterSpec generateIv() {
-			byte[] initialVector = new byte[16];
-			new SecureRandom().nextBytes(initialVector);
-			return new IvParameterSpec(initialVector);
 
+		byte[] salt = new byte[8];
+		random.nextBytes(salt);
+		
+		/* Derive the key, given password and salt. */
+		SecretKeyFactory factory = null;
+		try {factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");} catch (NoSuchAlgorithmException e) {e.printStackTrace();}
+		KeySpec spec = new PBEKeySpec(password, salt, 65536, 256);
+		SecretKey tmp = null;;
+		try {tmp = factory.generateSecret(spec);} catch (InvalidKeySpecException e) {e.printStackTrace();}
+		this.cleSecrete = new SecretKeySpec(tmp.getEncoded(), "AES");
+
+		Cipher cipher = null;
+		try {
+			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+		} catch (NoSuchAlgorithmException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (NoSuchPaddingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
-		 */
-		public String crypatage(String mes) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException{
-			Cipher cipher = Cipher.getInstance(this.algo);
-			cipher.init(Cipher.ENCRYPT_MODE, this.cleSecrete, this.initialVector);
-			byte[] cipherText = cipher.doFinal(mes.getBytes());
-			return Base64.getEncoder().encodeToString(cipherText);
-		}
+		AlgorithmParameters params = cipher.getParameters();
+		try {this.initialVector = params.getParameterSpec(IvParameterSpec.class).getIV();} catch (InvalidParameterSpecException e) {e.printStackTrace();}
+
+		/*
+		//TODO erase
+		System.out.println("Les informations :");
+		System.out.println(cleFinale);
+		//System.out.println(this.table.toString());
+		System.out.println(Base64.getEncoder().encodeToString(cleSecrete.getEncoded()));
+		*/
+    }
 
 
-		public String decrypatage(String mesCode) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException{
-			Cipher cipher = Cipher.getInstance(this.algo);
-			cipher.init(Cipher.DECRYPT_MODE, this.cleSecrete, this.initialVector);
-			byte[] mesDecrypte = cipher.doFinal(Base64.getDecoder().decode(mesCode));
-			return new String(mesDecrypte);
-		}
+	/*
+	public void genererCle() {
+		//construction de la clé
+		try {cleGen = KeyGenerator.getInstance("AES");} catch (NoSuchAlgorithmException e) {System.out.println("L'AES existe pas"); e.printStackTrace();}
+		SecureRandom alea = new SecureRandom();
+		cleGen.init(256,alea);
+		cleSecrete = cleGen.generateKey();
 
+		//generation de l'initial vector
+		byte[] initialVector = new byte[16];
+		new SecureRandom().nextBytes(initialVector);
+		this.initialVector = new IvParameterSpec(initialVector);
+
+
+		String key = cleSecrete.getEncoded().toString();
+		//System.out.println(key);
+	}
+
+
+
+	public IvParameterSpec generateIv() {
+		byte[] initialVector = new byte[16];
+		new SecureRandom().nextBytes(initialVector);
+		return new IvParameterSpec(initialVector);
 
 	}
+	 */
+	public String crypatage(String mes) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException{
+		Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+		cipher.init(Cipher.ENCRYPT_MODE, cleSecrete);
+		AlgorithmParameters params = cipher.getParameters();
+		try {this.initialVector = params.getParameterSpec(IvParameterSpec.class).getIV();} catch (InvalidParameterSpecException e) {e.printStackTrace();}
+		byte[] cipherText =  cipher.doFinal(mes.getBytes(StandardCharsets.UTF_8));
+		return Arrays.toString(cipherText);
+	}
+
+
+	public String decrypatage(String mesCode) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException{
+		setIv(mesCode);
+		byte[] ciphertext = new byte[this.table.size()];
+
+		for (int i = 0; i < ciphertext.length; i++)
+			ciphertext[i] = this.table.get(i);
+
+		Cipher cipher2 = Cipher.getInstance("AES/CBC/PKCS5Padding");
+		cipher2.init(Cipher.DECRYPT_MODE, this.cleSecrete, new IvParameterSpec(this.initialVector));
+		String plaintext = new String(cipher2.doFinal(ciphertext), StandardCharsets.UTF_8);
+		return plaintext;
+	}
+
+    public void setKey(String cleSecrete) {
+		byte[] decodedKey = Base64.getDecoder().decode(cleSecrete);
+		SecretKey originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+		this.cleSecrete= originalKey;
+	}
+    public void setIv(String vecteurInitial) {
+
+    	ArrayList<Byte> vector = new ArrayList<Byte>();
+    	ArrayList<Integer> entier = new ArrayList<Integer>();
+        //byte[] vector = new byte[16];
+        //int[] entier = new int[16];
+        //decoupage du string
+        vecteurInitial = vecteurInitial.substring(1, vecteurInitial.length()-1);
+        String[] liste = vecteurInitial.split(", ");
+        //passage String to int
+        for (int i = 0; i < liste.length; i++) {
+            entier.add(Integer.parseInt(liste[i]));
+        }
+        //passage int to byte
+        for (int i = 0; i < liste.length; i++) {
+            vector.add(entier.get(i).byteValue());
+        }
+
+        this.table = vector;
+        //this.vector = new IvParameterSpec(vector);
+    }
+
+    public String getKey() { return Base64.getEncoder().encodeToString(cleSecrete.getEncoded()); }
+    public String getIntialVector() { return table.toString(); }
+
+}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -192,7 +243,7 @@ public class Client {
 					return i;
 				}
 			}
-		}/////////////////////////////////////////////////   
+		}/////////////////////////////////////////////////
 		private boolean isPrime(long n){
 			if(n%2 == 0 || n%3 == 0) return false;
 			for(int i=5; i*i<=n; i+=6){
@@ -263,7 +314,7 @@ public class Client {
 			this.clePrimaire = BigInteger.valueOf(new PrimeNumberGen().getPrimeNumber());
 			this.clePrimaireRacine = BigInteger.valueOf(new PrimitiveRootGen(this.clePrimaire.intValue()).getPr());
 		}
-		
+
 		public void genCleSecrete(){
 			this.cleSecrete = BigInteger.valueOf(new PrimeNumberGen().getPrimeNumber());
 		}
@@ -275,7 +326,7 @@ public class Client {
 		public void setClePrimaireRacine(BigInteger a) {
 			this.clePrimaireRacine = a;
 		}
-		
+
 		public void setClePrimaire(BigInteger a) {
 			this.clePrimaire = a;
 		}
@@ -341,7 +392,7 @@ public class Client {
 			////////////////////////////////////////////////////////////////////
 
 			/**
-			 * 
+			 *
 			 */
 			private static final long serialVersionUID = 1L;
 			private final Panel head = new Panel();
@@ -414,7 +465,7 @@ public class Client {
 					receiver_label.setAlignmentX(LEFT_ALIGNMENT);
 					receiver_label.setAlignmentY(CENTER_ALIGNMENT);
 					receiver_label.setForeground(receiver_color);
-					head.add(receiver_label);	
+					head.add(receiver_label);
 				}
 
 				space.setAlignmentX(LEFT_ALIGNMENT);
@@ -573,7 +624,7 @@ public class Client {
 			input.setForeground(message_color);
 			input.setRows(3);
 
-			body.add(scroll_pane, BorderLayout.CENTER);		
+			body.add(scroll_pane, BorderLayout.CENTER);
 			body.add(input, BorderLayout.SOUTH);
 			this.add(body);
 
@@ -587,8 +638,8 @@ public class Client {
 			input.addKeyListener(this);
 
 			this.setTitle("Chat");
-			
-			
+
+
 			//affichage
 			this.setVisible(true);
 
@@ -620,7 +671,7 @@ public class Client {
 		@Override
 		public void keyPressed(KeyEvent e) {
 			if(e.getKeyCode() == KeyEvent.VK_ENTER) {
-				String message = input.getText();
+				String message = input.getText()+"";
 
 				client.sendMessage(message);
 
@@ -641,8 +692,10 @@ public class Client {
 		////////////////////////////////////////////////////////////////////////////////
 	}
 
-	CleAES aes = new CleAES();
+	AES aes = new AES();
 	DiffieHellMan securiteInitial = new DiffieHellMan();
+
+
 
 	//verification du message de FERMETURE DE CONNEXION
 	Boolean conditionArret(String message) {
@@ -652,9 +705,9 @@ public class Client {
 	//Cle pour DiffiHellman
 	String clePrimaire = "1867";
 	String clePrimaireRacine = "934";
-	
+
 	//recuperation des cles AES et InitVector
-	Boolean recupKey = true;
+	Boolean recupKey = false;
 	Boolean recupInitVector = true;
 
 	//variable pour femer la discussion
@@ -676,11 +729,11 @@ public class Client {
 
 
 	public String getActualTime() {
-		
-		
+
+
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 		LocalTime time = LocalTime.now();
-		
+
 		return time.format(formatter);
 
 
@@ -716,8 +769,8 @@ public class Client {
 	//// WAIT KEY //////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 	private boolean waitKey(String message) {
-		
-		
+
+
 		DocumentBuilder document_builder = null;
 		Document document = null;
 
@@ -728,14 +781,14 @@ public class Client {
 		document.getDocumentElement().normalize();
 		Element root = document.getDocumentElement();
 		String root_name = root.getNodeName();
-		
+
 		if(root_name.equals("diffiehellman")) {
 			String key = root.getElementsByTagName("key").item(0).getTextContent();
-			
+
 
 			securiteInitial.aliceCalculationOfKey(new BigInteger(key), securiteInitial.cleSecrete);
 			aes.generateKey(securiteInitial.cleFinale);
-			System.out.println(securiteInitial.cleFinale);
+
 			return true;
 		}
 		/*
@@ -752,12 +805,15 @@ public class Client {
 		return false;
 
 
-	}	
+	}
 	////////////////////////////////////////////////////////////////////////////////
 	//// SEND MESSAGE //////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 	private final void sendMessage(String message) {
 		String xml_message = "";
+
+		if(message.length()==0)
+			return;
 
 		if(message.charAt(0) == '/') {
 			////// COMMAND
@@ -806,11 +862,25 @@ public class Client {
 					+ "</public>";
 		}
 		try {
-			out.println(aes.crypatage(xml_message));
+
+			String encrypted_message = aes.crypatage(xml_message);
+
+			/*
+			//TODO erase
+			System.out.println("message : "+xml_message);
+
+			System.out.println(xml_message.length());
+			System.out.println(encrypted_message.length());
+
+			System.out.println("crypatage : "+encrypted_message);
+			System.out.println("decrypatage :"+aes.decrypatage(encrypted_message));
+			*/
+			encrypted_message = xml_message;
+			out.println(encrypted_message);
 			out.flush();
 		} catch (Exception error) { error.printStackTrace(); }
 
-	}	
+	}
 	////////////////////////////////////////////////////////////////////////////////
 	//// READ MESSAGE //////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
@@ -895,14 +965,14 @@ public class Client {
 
 	@SuppressWarnings("deprecation")
 	public Client(String lien,	int port) {
-		
+
 		try {
 			//info serv
 			System.out.println("Chat : [Connecting] - Recherche du serveur.");
-			
+
 			String textInitiation = "[Connecting] - La relation au serveur est en cours d'etablissement...";
 			window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), textInitiation, "");
-			
+
 			connexion = new Thread(new Runnable() {
 				@Override
 				public void run() {
@@ -916,9 +986,9 @@ public class Client {
 							catch (IOException e) {System.out.println("Chat : [Error] - La connexion ne peut pas être établi : "+e); echoSocket =null;/*e.printStackTrace();*/}
 							memo = moment;
 						}
-						
+
 					}
-					
+
 				}
 			});
 			connexion.start();
@@ -945,10 +1015,10 @@ public class Client {
 			if (echoSocket != null) {
 				connexion.stop();
 				String textRelationServeur = "[Connected] - La relation au serveur est effectuee.";
-	
+
 				window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), textRelationServeur, "");
 				System.out.println("Chat : [Connecting] - Serveur trouvé.");
-	
+
 				//connexion
 				System.out.println("Chat : [Connecting] - Lancement socket.");
 			}
@@ -956,24 +1026,23 @@ public class Client {
 			in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
 			System.out.println("Chat : [Connecting] - Socket établi");
 			System.out.println("Chat : [Connected]");
-			
+
 			////////////////////////////////////////////////////////////
 			////////////////////////////////////////////////////////////
 			////////////////////////////////////////////////////////////
 			//Construction des clés pour Diffi-Hellman
-			securiteInitial.setClePrimaire(new BigInteger(clePrimaire)); 
+			securiteInitial.setClePrimaire(new BigInteger(clePrimaire));
 			securiteInitial.setClePrimaireRacine(new BigInteger(clePrimaireRacine));
 			securiteInitial.genCleSecrete();
-			
+
 			BigInteger toServeur = securiteInitial.toServeur(securiteInitial.cleSecrete);
 			String xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 					+ "<diffiehellman>"
 					+		"<key>" + toServeur.toString() + "</key>"
 					+ "</diffiehellman>";
-			
-			
-			System.out.println("toServeur " + toServeur);
-			
+
+
+
 			out.println(xml_message);
 			out.flush();
 			////////////////////////////////////////////////////////////
@@ -997,7 +1066,7 @@ public class Client {
 						/*
 						try {System.out.println(aes.crypatage(message));} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
 								| InvalidAlgorithmParameterException | BadPaddingException
-								| IllegalBlockSizeException e1) {e1.printStackTrace();}						
+								| IllegalBlockSizeException e1) {e1.printStackTrace();}
 						try {System.out.println(aes.decrypatage(aes.crypatage(message)));} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
 								| InvalidAlgorithmParameterException | BadPaddingException
 								| IllegalBlockSizeException e1) {e1.printStackTrace();}
@@ -1033,10 +1102,16 @@ public class Client {
 					//discussion classique
 					try {
 						message = in.readLine();
+
+						/*
+						//TODO erase
+						System.out.println("reception : "+ message);
+						*/
+
 						while(message!=null){
 							String decrypted_message = null;
 							try {decrypted_message = aes.decrypatage(message);} catch (Exception e) {System.out.println("Chat : [Error] - "+e);}
-
+							decrypted_message=message;
 							readMessage(decrypted_message, message);
 
 							if(conditionArret(message)) {
@@ -1069,27 +1144,27 @@ public class Client {
 		catch(IOException e){
 			System.out.println("Chat : [Error] - La connexion ne peut pas être établi : "+e) ;
 
-		} 
+		}
 
 	}
 
-	//TODO 
+	//TODO
 	/*
-	 * 
-	 * 
+	 *
+	 *
 	 * faire un bouton pour avoir la cle sur un fichier
-	 * 
-	 * 
-	 * 
+	 *
+	 *
+	 *
 	 * gestion de la perte de serveur
 	 * gestion de la fermeture de la connexion
-	 * 
+	 *
 	 * fermeture de l'application
-	 * 
+	 *
 	 * ajouter un Bouton
-	 * 
+	 *
 	 * faire le compte-rendue !
-	 * 
+	 *
 	 */
 
 	public static void main(String[] args) {
@@ -1097,5 +1172,3 @@ public class Client {
 		Client client = new Client("127.0.0.1",55555);
 	}
 }
-
-
