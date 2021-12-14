@@ -66,17 +66,32 @@ private final class AES {
     
     private byte[] table;
     
-    public void generateKey(BigInteger cleFinale) {
-    	System.out.println("pouet");
-    	System.out.println(cleFinale);
-    	
+    public void generateKey(BigInteger cleFinale) {    	
         try { generator = KeyGenerator.getInstance("AES"); } catch (NoSuchAlgorithmException error) { error.printStackTrace(); }
-        SecureRandom random = new SecureRandom(cleFinale.toByteArray());
-        generator.init(256, random);
+        
+        System.out.println();
+        System.out.println("DIFFIEHELLMAN KEY :");
+        System.out.println(cleFinale);
+        System.out.println();
+        
+        Random random = new Random();
+        random.setSeed(cleFinale.intValue());
+        byte[] AESKEY = new byte[16];
+        
+        random.nextBytes(AESKEY);
+        
+        System.out.println("AES KEY :");
+        System.out.println(Arrays.toString(AESKEY));
+        System.out.println();
+
+        
+        generator.init(256, null); // REPLACE NULL BY RANDOM
         this.key = generator.generateKey();
         
         table = new byte[16];
-        new SecureRandom(cleFinale.toByteArray()).nextBytes(table);
+        //new SecureRandom(cleFinale.toByteArray()).nextBytes(table);
+        System.out.println(this.getKey());
+        System.out.println(Arrays.toString(table));
         this.vector = new IvParameterSpec(table);
     }
     
@@ -508,29 +523,17 @@ private boolean waitKey(String name, String message) {
 	if(root_name.equals("diffiehellman")) {
 		String key = root.getElementsByTagName("key").item(0).getTextContent();
 
-
 		securiteInitial.bobCalculationOfKey(new BigInteger(key), securiteInitial.cleSecrete);
-		System.out.println(securiteInitial.cleFinale);
+		
+		Client client = clients.get(name);
+		client.aes.generateKey(securiteInitial.cleFinale);
+		
 		return true;
 	}
 	
-	Client client = clients.get(name);
-	client.aes.generateKey(securiteInitial.cleFinale);
+	return false;
 	
-/*
-if(root_name.equals("aes")) {
-String key = root.getElementsByTagName("key").item(0).getTextContent();
-String vector = root.getElementsByTagName("vector").item(0).getTextContent();
-
-aes.setKey(key);
-aes.setIv(vector);
-
-return true;
-}*/
-
-return false;
-
-
+	
 }
 ////////////////////////////////////////////////////////////////////
 //// GET TIME //////////////////////////////////////////////////////
@@ -558,9 +561,7 @@ public void sendDiffieHellmanKey(String name) {
 			+ "<diffiehellman>"
 			+		"<key>" + toClient.toString() + "</key>"
 			+ "</diffiehellman>";
-	
-	System.out.println("toClient " + toClient);
-	
+		
 	client.out.println(xml_message);
 	
 	client.out.flush();

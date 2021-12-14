@@ -12,6 +12,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.Random;
@@ -75,15 +76,40 @@ public class Client {
 		
 		public void generateKey(BigInteger cleFinale) {
 	        try { cleGen = KeyGenerator.getInstance("AES"); } catch (NoSuchAlgorithmException error) { error.printStackTrace(); }
-	        SecureRandom random = new SecureRandom(cleFinale.toByteArray());
-	        cleGen.init(256, random);
+	        
+	        System.out.println();
+	        
+	        System.out.println("DIFFIEHELLMAN KEY :");
+	        System.out.println(cleFinale);
+	        System.out.println();
+	        
+	        Random random = new Random();
+	        random.setSeed(cleFinale.intValue());
+	        byte[] AESKEY = new byte[16];
+	        
+	        System.out.println("AES KEY :");
+	        System.out.println(Arrays.toString(AESKEY));
+	        System.out.println();
+	        
+	        random.nextBytes(AESKEY);
+	        
+	        System.out.println("AES KEY :");
+	        System.out.println(Arrays.toString(AESKEY));
+	        System.out.println();
+	        
+	        cleGen.init(256, null);
 	        cleSecrete = cleGen.generateKey();
 	        
 	        table = new byte[16];
-	        new SecureRandom(cleFinale.toByteArray()).nextBytes(table);
+	        //new SecureRandom(cleFinale.toByteArray()).nextBytes(table);
+	        
 	        this.initialVector = new IvParameterSpec(table);
-	    }
 
+	        System.out.println(this.getKey());
+	        System.out.println(Arrays.toString(table));
+		}
+
+	    public String getKey() { return Base64.getEncoder().encodeToString(cleSecrete.getEncoded()); }
 		public void setKey(String cleSecrete) {
 			byte[] decodedKey = Base64.getDecoder().decode(cleSecrete);
 			SecretKey originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
