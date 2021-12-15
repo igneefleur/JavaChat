@@ -40,6 +40,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.text.DefaultCaret;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -63,6 +64,8 @@ import java.awt.Frame;
 import java.awt.Label;
 import java.awt.Panel;
 import java.awt.ScrollPane;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
@@ -448,6 +451,7 @@ public class Client {
 		//private final ScrollPane scroll_pane = new ScrollPane(ScrollPane.SCROLLBARS_AS_NEEDED);
 		private final JPanel main = new JPanel();
 		private final JScrollPane scrollpane = new JScrollPane(main);
+		private int main_height = 0;
 		private final Label space = new Label();
 
 		private final JTextArea input = new JTextArea();
@@ -519,6 +523,18 @@ public class Client {
 			//main.setPreferredSize(new Dimension(500, 500));
 			
 			scrollpane.setPreferredSize(new Dimension(500, 500));
+			
+			////// AUTO AJUST SCROLLBAR
+			scrollpane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {  
+		        public void adjustmentValueChanged(AdjustmentEvent e) {
+		        	if(main.getSize().height != main_height) { //// SI LA TAILLE DE MAIN CHANGE
+		        		main_height = main.getSize().height;
+		        		e.getAdjustable().setValue(e.getAdjustable().getMaximum());
+		        	}
+		            
+		        }
+		    });
+
 			
 			main.add(space);
 			//scroll_pane.add(main);
