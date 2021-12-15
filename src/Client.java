@@ -35,8 +35,10 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.BoxLayout;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -253,7 +255,7 @@ public class Client {
 	////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	public class Window extends Frame implements WindowListener, KeyListener {
+	public class Window extends JFrame implements WindowListener, KeyListener {
 		private static final long serialVersionUID = 1L;
 
 		////////////////////////////////////////////////////////////////////
@@ -443,8 +445,9 @@ public class Client {
 
 		private final Panel body = new Panel();
 
-		private final ScrollPane scroll_pane = new ScrollPane(ScrollPane.SCROLLBARS_AS_NEEDED);
-		private final Panel main = new Panel();
+		//private final ScrollPane scroll_pane = new ScrollPane(ScrollPane.SCROLLBARS_AS_NEEDED);
+		private final JPanel main = new JPanel();
+		private final JScrollPane scrollpane = new JScrollPane(main);
 		private final Label space = new Label();
 
 		private final JTextArea input = new JTextArea();
@@ -508,24 +511,35 @@ public class Client {
 
 			body.setLayout(new BorderLayout());
 
+			
+			
 			main.setBackground(background_color);
+			main.setAutoscrolls(true);
 			main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
+			//main.setPreferredSize(new Dimension(500, 500));
+			
+			scrollpane.setPreferredSize(new Dimension(500, 500));
+			
 			main.add(space);
-			scroll_pane.add(main);
+			//scroll_pane.add(main);
 
 			input.setBackground(background_color);
 			input.setForeground(message_color);
 			input.setRows(3);
 
-			body.add(scroll_pane, BorderLayout.CENTER);
+			//body.add(scroll_pane, BorderLayout.CENTER);
+			body.add(scrollpane, BorderLayout.CENTER);
+			
 			body.add(input, BorderLayout.SOUTH);
 			this.add(body);
 
 			//this.setUndecorated(true);
 			this.pack();
 
-			this.setSize(500, 500);
-			this.setResizable(true);
+			//this.setSize(500, 500);
+			this.setMinimumSize(new Dimension(500, 500));
+			this.setMaximumSize(new Dimension(500, 500));
+			this.setResizable(false);
 
 			this.addWindowListener(this);
 			input.addKeyListener(this);
