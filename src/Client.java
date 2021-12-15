@@ -35,6 +35,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -64,6 +65,8 @@ import java.awt.Frame;
 import java.awt.Label;
 import java.awt.Panel;
 import java.awt.ScrollPane;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.KeyEvent;
@@ -508,14 +511,21 @@ public class Client {
 		////////////////////////////////////////////////////////////////////
 		public Window(Client client){
 			super();
-
-
+			Window self = this;
 
 			this.client = client;
 
 			body.setLayout(new BorderLayout());
 
-			
+			JButton button = new JButton("switch");
+			button.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					setIsEncrypted(!is_encrypted);
+					self.getContentPane().repaint();
+				}
+			});
+			body.add(button, BorderLayout.NORTH);
 			
 			main.setBackground(background_color);
 			main.setAutoscrolls(true);
