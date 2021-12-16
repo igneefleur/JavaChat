@@ -36,11 +36,11 @@ public final class AddressWindow extends JFrame implements WindowListener {
 			
 			private final JPanel top = new JPanel();
 				private final JLabel ip_label = new JLabel("IP : ");
-				private final JTextArea ip_textarea = new JTextArea("");
+				private final JTextArea ip_textarea = new JTextArea("127.0.0.1");
 		
 			private final JPanel bottom = new JPanel();
 				private final JLabel port_label = new JLabel("Port : ");
-				private final JTextArea port_textarea = new JTextArea("");
+				private final JTextArea port_textarea = new JTextArea("55555");
 		
 		////// FOOTER
 		private final JPanel footer = new JPanel();

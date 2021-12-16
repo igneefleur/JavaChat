@@ -370,7 +370,10 @@ public class Window extends JFrame implements WindowListener, KeyListener {
 	@Override
 	public void keyPressed(KeyEvent e) {
 		if(e.getKeyCode() == KeyEvent.VK_ENTER) {
-			String message = input.getText()+"";
+			String message = input.getText();
+			
+			////// BYE
+			if(message.equals("bye")) client.Quit();
 
 			client.sendMessage(message);
 
