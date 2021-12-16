@@ -15,7 +15,7 @@ import javax.swing.JTextArea;
 public final class AddressWindow extends JFrame implements WindowListener {
 	private static final long serialVersionUID = 1L;
 
-	private class Address {
+	public final class Address {
 		public final String ip;
 		public final int port;
 		public Address(String ip, int port) {
@@ -136,13 +136,6 @@ public final class AddressWindow extends JFrame implements WindowListener {
 		return null;
 	}
 	
-	public static void main(String[] args) {
-		AddressWindow address_window = new AddressWindow();
-		Address address = address_window.waitAddress(); // blocks program
-		
-		System.out.println(address.ip);
-		System.out.println(address.port);
-	}
 
 	////// WINDOW LISTENER
 	@Override

@@ -51,7 +51,6 @@ import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.awt.BorderLayout;
@@ -80,7 +79,7 @@ public class Client {
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -271,7 +270,7 @@ public class Client {
 
 			System.out.println("crypatage : "+encrypted_message);
 			System.out.println("decrypatage :"+aes.decrypatage(encrypted_message));
-			*/
+			 */
 			//encrypted_message = aes.encrypt(xml_message);
 			out.println(encrypted_message);
 			out.flush();
@@ -503,7 +502,7 @@ public class Client {
 						/*
 						//TODO erase
 						System.out.println("reception : "+ message);
-						*/
+						 */
 
 						while(message!=null){
 							String decrypted_message = null;
@@ -565,7 +564,12 @@ public class Client {
 	 */
 
 	public static void main(String[] args) {
-		//$ ip -br -c a (sur le pc serveur)
-		Client client = new Client("127.0.0.1",55555);
+		// GET SERVER ADDRESS via sh command :
+		//$ ip -br -c a
+		
+		AddressWindow address_window = new AddressWindow();
+		AddressWindow.Address address = address_window.waitAddress(); // blocks program
+		
+		Client client = new Client(address.ip, address.port);
 	}
 }
