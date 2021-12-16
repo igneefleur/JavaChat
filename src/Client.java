@@ -261,17 +261,6 @@ public class Client {
 
 			String encrypted_message = aes.encrypt(xml_message);
 
-			/*
-			//TODO erase
-			System.out.println("message : "+xml_message);
-
-			System.out.println(xml_message.length());
-			System.out.println(encrypted_message.length());
-
-			System.out.println("crypatage : "+encrypted_message);
-			System.out.println("decrypatage :"+aes.decrypatage(encrypted_message));
-			 */
-			//encrypted_message = aes.encrypt(xml_message);
 			out.println(encrypted_message);
 			out.flush();
 		} catch (Exception error) { error.printStackTrace(); }
@@ -498,11 +487,6 @@ public class Client {
 					//discussion classique
 					try {
 						message = in.readLine();
-
-						/*
-						//TODO erase
-						System.out.println("reception : "+ message);
-						 */
 
 						while(message!=null){
 							String decrypted_message = null;
