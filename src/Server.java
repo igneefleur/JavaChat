@@ -457,6 +457,11 @@ public final class Server {
 
 
 				message = scanner.nextLine();
+				
+				////// BYE
+				if(message.equals("bye")) System.exit(1);
+				
+				
 				sendPublicMessage(server_name, server_red, server_green, server_blue, message);
 
 
