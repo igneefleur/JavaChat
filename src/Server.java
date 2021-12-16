@@ -1,26 +1,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 //// IMPORTS ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-//////
+////// SOCKETS
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Random;
+
+////// SCANNER
 import java.util.Scanner;
-import java.util.Vector;
+
 ////// MUTEX
 import java.util.concurrent.locks.ReentrantLock;
 
-import java.util.Base64;
+////// TIME
 import java.util.Date;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 ////// XML
 import javax.xml.parsers.DocumentBuilder;
@@ -30,47 +28,25 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
 import java.io.StringReader;
+
+////// DIFFIE HELLMAN
 import java.math.BigInteger;
-import java.security.AlgorithmParameters;
-////// AES
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.InvalidParameterSpecException;
-import java.security.spec.KeySpec;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
+
+////// EXCEPTIONS
+import java.io.IOException;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
 public final class Server {
-
-////////////////////////////////////////////////////////////////////////////////
-//// AES ///////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-	
-
 ////////////////////////////////////////////////////////////////////////////////
 //// CLIENT ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
 private class Client {
+
 ////////////////////////////////////////////////////////////////////
 //// ATTRIBUTES ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -102,6 +78,7 @@ private class Client {
 ////////////////////////////////////////////////////////////////////
 	Client(Socket socket, String n){
 
+		
 		this.socket = socket;
 		try {
 			out = new PrintWriter(socket.getOutputStream());
@@ -109,39 +86,31 @@ private class Client {
 		} catch (Exception error) { error.printStackTrace(); }
 		this.name = n;
 
+		
 ////////////////////////////////////////////////////////////////////
 //// THREAD ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 thread_receive = new Thread(new Runnable() {
-
+	
+	
 	String encrypted_message = "";
 	String decrypted_message = "";
+	
 	@Override public void run() {
-
-
-
-	//Construction des clés pour Diffi-Hellman
+	////// DIFFIE HELLMAN KEY
 	securiteInitial.setClePrimaire(new BigInteger(clePrimaire));
 	securiteInitial.setClePrimaireRacine(new BigInteger(clePrimaireRacine));
 	securiteInitial.genCleSecrete();
-
 	sendDiffieHellmanKey(n);
 
-
-
-
 	String message = "";
-	try {message = in.readLine();} catch (IOException e) {}
-	while(!waitKey(name, message)) {
-
-		}
+	try { message = in.readLine(); } catch (IOException e) {}
+	while(!waitKey(name, message)) {}
 
 	Client client = clients.get(name);
 	client.aes.generateKey(securiteInitial.cleFinale);
 
 	while(true) { try {
-
-
 		encrypted_message = in.readLine();
 		decrypted_message = "";
 
@@ -159,8 +128,6 @@ thread_receive = new Thread(new Runnable() {
 
 } catch (IOException error) { error.printStackTrace(); return; }
 }}}); thread_receive.start(); }
-
-
 ////////////////////////////////////////////////////////////////////
 //// READ MESSAGE //////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -212,7 +179,7 @@ private final void read(String message) {
 					+ "\n"
 					+ "\n" + "/help                          show this help"
 					+ "\n" + "/rename [NAME]                 change your name"
-					+ "\n" + "/color [RED] [GREEN] [BLUE]    change your colorname"
+					+ "\n" + "/recolor [RED] [GREEN] [BLUE]    change your colorname"
 					+ "\n" + "/private [NAME] [TEXT]         send private message to user"
 					+ "\n" + "==========================================================="
 			);
@@ -230,7 +197,7 @@ private final void read(String message) {
 				sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue, "Your name changes to " + name);
 			}
 			break;
-		case "color":
+		case "recolor":
 			// TODO
 
 			String sender_red = root.getElementsByTagName("red").item(0).getTextContent();
@@ -331,19 +298,7 @@ private boolean waitKey(String name, String message) {
 
 		return true;
 	}
-
-/*
-if(root_name.equals("aes")) {
-String key = root.getElementsByTagName("key").item(0).getTextContent();
-String vector = root.getElementsByTagName("vector").item(0).getTextContent();
-
-aes.setKey(key);
-aes.setIv(vector);
-
-return true;
-}*/
-
-return false;
+	return false;
 
 
 }
@@ -365,6 +320,7 @@ public String getActualTime() {
 ////////////////////////////////////////////////////////////////////
 public void sendDiffieHellmanKey(String name) {
 
+	
 	mutex.lock();
 	Client client = clients.get(name);
 
@@ -380,6 +336,7 @@ public void sendDiffieHellmanKey(String name) {
 	client.out.flush();
 	mutex.unlock();
 
+	
 }
 ////////////////////////////////////////////////////////////////////
 //// SEND PRIVATE MESSAGE //////////////////////////////////////////
@@ -416,7 +373,7 @@ public void sendPrivateMessage(String sender, String sender_red, String sender_g
 		client.out.println(encrypted_message);
 		client.out.flush();
 
-		if(!sender.equals(server_name)) {
+		if(!sender.equals(server_name) && !sender.equals(receiver)) {
 			client = clients.get(sender);
 			encrypted_message = client.aes.encrypt(xml_message);
 			client.out.println(encrypted_message);
@@ -472,8 +429,6 @@ public Server() {
 	System.out.println("Server launch!");
 
 
-
-
 ////////////////////////////////////////////////////////////////////
 //// THREAD CONNECT CLIENTS ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -489,12 +444,14 @@ thread_connect = new Thread(new Runnable() { @Override public void run() { while
 	System.out.println(client.name + " enter the chat");
 	mutex.unlock();
 
+	
 } catch (IOException error) { error.printStackTrace(); } }}}); thread_connect.start();
 ////////////////////////////////////////////////////////////////////////////////
 //// THREAD SEND MESSAGES //////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 thread_send = new Thread(new Runnable() {
 
+	
 	String message = "";
 	@Override public void run() {while(true) {
 

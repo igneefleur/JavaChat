@@ -89,8 +89,6 @@ public class Client {
 	////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////
 
-	
-
 	AES aes = new AES();
 	DiffieHellman securiteInitial = new DiffieHellman();
 
@@ -232,13 +230,13 @@ public class Client {
 						+ "</rename></command>";
 
 				break;
-			case "/color":
+			case "/recolor":
 				xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-						+ "<command><color>"
+						+ "<command><recolor>"
 						+ 		"<red>" + command[1] + "</red>"
 						+ 		"<green>" + command[2] + "</green>"
 						+ 		"<blue>" + command[3] + "</blue>"
-						+ "</color></command>";
+						+ "</recolor></command>";
 
 				break;
 			case "/private":
