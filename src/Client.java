@@ -7,41 +7,7 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.security.AlgorithmParameters;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.InvalidParameterSpecException;
-import java.security.spec.KeySpec;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Iterator;
-import java.util.Random;
 import java.util.Scanner;
-import java.util.Vector;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.text.DefaultCaret;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -53,28 +19,11 @@ import org.xml.sax.SAXException;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.awt.BorderLayout;
-
 ////// COLOR
 import java.awt.Color;
 
 
-import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.Label;
-import java.awt.Panel;
-import java.awt.ScrollPane;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 
-
-@SuppressWarnings("unused")
 public class Client {
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -535,23 +484,6 @@ public class Client {
 
 	}
 
-	//TODO
-	/*
-	 *
-	 *
-	 * faire un bouton pour avoir la cle sur un fichier
-	 *
-	 *
-	 *
-	 * gestion de la perte de serveur
-	 * gestion de la fermeture de la connexion
-	 *
-	 * fermeture de l'application
-	 *
-	 *
-	 * faire le compte-rendue !
-	 *
-	 */
 
 	public static void main(String[] args) {
 		// GET SERVER ADDRESS via sh command :
@@ -560,6 +492,7 @@ public class Client {
 		AddressWindow address_window = new AddressWindow();
 		AddressWindow.Address address = address_window.waitAddress(); // blocks program
 		
+		@SuppressWarnings("unused")
 		Client client = new Client(address.ip, address.port);
 	}
 }

@@ -9,6 +9,7 @@ Chaque Utilisateur à la possibilité d'envoyer un message publique (à tous les
 
 Toutes les commandes commençent par le caractère "/". Elles sont :
 > ***"/help"*** -> affiche une aide pour toutes les commandes.<br/>
+> ***"/getKey"*** -> renvoie la clé propre au client.<br/>
 > ***"/rename [NAME]"*** -> modifie le pseudonyme de l'utilsateur par [NAME].<br/>
 > ***"/recolor [RED] [GREEN] [BLUE]"*** -> modifie la couleur de l'utilsateur par celle donnée en RGB.<br/>
 > ***"/private [NAME] [TEXT]"*** -> envoie un message privé à l'utilisateur [NAME] avec comme contenu [TEXT].
@@ -21,17 +22,27 @@ Toutes les commandes commençent par le caractère "/". Elles sont :
 Deux threads sont utilisés pour la reception et l'envoi de message.
 
 > Sources utilisés :
->> PDF fourni <br/>
+>> PDF de cours <br/>
 >> http://www.codeurjava.com/2014/11/java-socket-clientserveur-mini-chat.html
 
 ***2) Modifiez votre application de manière à ce que la réception de la chaîne ‘’bye’’ mette fin à la connexion.***
 
 > Lorsqu'un Client envoie uniquement la chaine "bye", un signal est envoyé au serveur lui disant qu'un Client est parti (afin de le supprimer de la listes des clients) et alors le programme du Client se ferme.<br/>
-Lorsqu'un Serveur envoie uniquement la chaine "bye", le serveur se ferme, et tous les Clients qui sont connecté au serveur se ferment aussi.
+Lorsqu'un Serveur envoie uniquement la chaine "bye", le serveur se ferme, et tous les Clients qui sont connecté au serveur se ferment aussi.<br/>
+L'usage de la chaîne ‘’bye’’ est sur l'émission. C'est le Client qui choisit de quitter la discussion. Il ne peut pas se faire éjecter de la discussion.
 
 ***3) Créez un module capable de générer une clé AES, de l’exporter dans un fichier et de charger une clé existante depuis un fichier.***
 
-> La clé AES se génère pour le Client et le Serveur à partir d'un nombre secret est et directement utilisé pour crypter et décrypter des messages. Le nombre secret changeant pour chaque Client, charger une clé existante ou l'exporter est inutile.
+> Lors du developpement du module AES, on a choisi de faire l'échange de clé directement au moment de la liaison avec le serveur. C'est-à-dire que le Serveur va générer une nouvelle clé AES puis il va l'envoyer au nouveau client. Ainsi, chaque utilisateur possede sa clé et elle est unique. <br/>
+> Voici le protocole que l'on a utilisé :
+>> Ouverture du serveur <br/>
+>> Recuperation de l'adresse IP <br/>
+>> Mise a jour de l'adresse IP <br/>
+>> Lancement des Sockets <br/>
+>> Reception d'un Socket <br/>
+>> envoie d'une clé AES généré par le serveur (clé secrete + InitialVector) <br/>
+>> Assimilation côté client des informations en fonction des balises initiales pour configurer les AES utilisé par l'AES <br/>
+>> Lancement du Chat <br/>
 
 
 > Sources utilisés :
@@ -40,22 +51,32 @@ Lorsqu'un Serveur envoie uniquement la chaine "bye", le serveur se ferme, et tou
 
 ***4) Intégrez le code responsable du chargement de la clé depuis un fichier au processus de démarrage du client et du serveur.***
 
-> Voir réponse aux questions ***3*** et ***6.1***.
+> Dû au protocole que l'on a choisi d'utiliser, et avec la permission, cette question a été ignoré..
 
 ***5) Utilisez cette clé partagée pour chiffrer les messages envoyés et les déchiffrer à la réception. Affichez, pour chaque message, la version chiffrée et la version en clair.***
 
-> Pour obtenir la version chiffrée des messages, il faut appuyer sur le button "switch", alors tous les messages du Client seront modifiés pour afficher la version chiffrée.<br/>
+> Pour obtenir la version chiffrée des messages, il faut appuyer sur le bouton "switch", alors tous les messages du Client seront modifiés pour afficher la version chiffrée.<br/>
 Le Serveur n'a pas cette fonctionnalité car il possède une clé différente pour chaque client, et afficher les messages chiffrés en fonction de chaque clé serait illisible (déjà qu'un message chiffré est difficile à lire...).
 
 ***6) Comment peut-on améliorer la sécurité des échanges ?***
 
 > ***1. Implémentez et commentez votre solution. Vous pouvez utiliser d’autres services de java. (classes ...)***
 
->> TODO : EXPLICATION DIFFIE HELLMAN
+> Le problème d'utiliser le protocole expliqué au dessus c'est que la clé AES est diffusé en clair. L'interception des messages lors de la connexion permet d'avoir accés à tous les messages. Nous avons choisi, suite aux conseils de quelques camarades, d'appliquer le protocole de Diffie-Hellmann.
+>> 1- echange d'une clePrimaire et d'une racine clePrimaireRacine<br/>
+>> 2- définition d'une cleScreteServeur et cleScreteClient<br/>
+>> 3- Puis construction d'un entier avec ces 3 éléments qui sera envoyé au réceptionneur:<br/>
+>> toServeur = clePrimaireRacine ^ cleScreteClient  % clePrimaire<br/>
+>> toClient  = clePrimaireRacine ^ cleScreteServeur % clePrimaire<br/>
+
+>> 4- Enfin, avec ce nouvel entier, on peut calculer
+>> FinalKey = toServeur ^ cleScreteServeur % clePrimaire<br/>
+>> FinalKey = toClient ^ cleScreteClient % clePrimaire<br/>
+>> - Ainsi, comme les clés secrètes sont conservés sur les ordinateurs et ne sont pas échangés, il n'est pas possible de déterminer les 'ServeurKey' et 'Clientkey'.<br/>
 
 > ***2. Commentez votre code et justifiez votre choix (numéro de port, algorithmes, types de cryptographie ...)***
 
->> TODO : EXPLIQUER QU'ON A BIEN COMMENTE, PLUS EXPLIQUER PORTS
+>> Le code est commenté par section. On sait à quoi correspont la zone entre commentaire. Théo a fait en sorte que les noms de variables soit explicites pour plus de faciliter de relecture.
 
 > ***3. Votre code doit pouvoir s’exécuter sur n’importe quelle machine sans demander de créer une arborescence de fichiers particulière ou des IP spécifiques.***
 

@@ -53,9 +53,7 @@ public class Window extends JFrame implements WindowListener, KeyListener {
 		//// VISUAL ELEMENTS ///////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////
 
-		/**
-		 *
-		 */
+
 		private static final long serialVersionUID = 1L;
 		private final Panel head = new Panel();
 		private final JLabel sender_label;

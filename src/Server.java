@@ -71,7 +71,7 @@ public final class Server {
 		String blue = "230";
 		private final boolean isBetween0And255(int value) { return 0 <= value && value <= 255; }
 
-
+		
 
 		////////////////////////////////////////////////////////////////////
 		//// INITIALISATION ////////////////////////////////////////////////
