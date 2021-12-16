@@ -101,4 +101,4 @@ La cryptographie utilisé est de type confidentialité à clé secrète. On essa
 > Le Client possède une interface graphique où il peut voir tous les messages depuis qu'il est connecté, et peut écrire des messages aux autres Clients dans une zone de texte en bas de la fenêtre et envoyer ces messages en appuyant sur la touche "Entrée".<br/>
 > Le Serveur ne possède pas d'interface graphique, il peut donc être lancé facilement sur un hébergeur.
 
-===
+----
