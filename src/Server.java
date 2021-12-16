@@ -66,177 +66,6 @@ public final class Server {
 //// AES ///////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 	
-private final class AES {
-
-	private SecretKey key;
-	private byte[] iv = new byte[16];
-
-	public void generateKey(BigInteger diffieHellman_key) {
-
-		char[] password = diffieHellman_key.toString().toCharArray();
-		SecretKeyFactory factory;
-		try {
-			factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-			KeySpec spec = new PBEKeySpec(password, new byte[8], 65536, 256);
-			SecretKey tmp = factory.generateSecret(spec);
-			this.key = new SecretKeySpec(tmp.getEncoded(), "AES");
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException error) { error.printStackTrace(); }
-		
-	}
-	
-	public String encrypt(String decrypted_message) {
-		try {
-			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-			cipher.init(Cipher.ENCRYPT_MODE, this.key, new IvParameterSpec(this.iv));
-			AlgorithmParameters params = cipher.getParameters();
-			byte[] ciphertext = cipher.doFinal(decrypted_message.getBytes(StandardCharsets.UTF_8));
-			String encrypted_message = Base64.getEncoder().encodeToString(ciphertext);
-			return encrypted_message;
-		} catch (IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-
-	public String decrypt(String encrypted_message) {
-		try {
-			byte[] ciphertext = Base64.getDecoder().decode(encrypted_message);
-			Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-			cipher.init(Cipher.DECRYPT_MODE, this.key, new IvParameterSpec(this.iv));
-			String decrypted_message = new String(cipher.doFinal(ciphertext), StandardCharsets.UTF_8);
-			return decrypted_message;
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-	
-}
-
-////////////////////////////////////////////////////////////////////////////////
-////Diffie-Hellmann ////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-private class PrimeNumberGen {
-	private long n;
-	public long getPrimeNumber(){
-		this.n = (int)(new Random().nextDouble()*100)+250;
-		long l = 0;
-		l = (long) ((this.n)*(Math.log(this.n) + (Math.log(Math.log(this.n)) -1) + ((Math.log(Math.log(this.n))-2)/(Math.log(this.n))) - ((Math.log(Math.log(this.n)) -21.0/10.0)/Math.log(this.n)) ));
-		for(long i=l;;i++){
-			if(isPrime(i)){
-				return i;
-			}
-		}
-	}/////////////////////////////////////////////////
-	private boolean isPrime(long n){
-		if(n%2 == 0 || n%3 == 0) return false;
-		for(int i=5; i*i<=n; i+=6){
-			if(n%i == 0 || n%(i+2)==0) return false;
-		}
-		return true;
-	}
-}
-
-public class PrimitiveRootGen {
-	long pr, clePrimaire, phi;
-	public PrimitiveRootGen(long clePrimaire){
-		this.clePrimaire = clePrimaire;
-		this.phi = this.clePrimaire - 1;
-		Vector<Long> primitiveRoots =  this.getPrimitiveRoot(this.clePrimaire, this.phi);
-		this.pr = primitiveRoots.get(new Random().nextInt(primitiveRoots.size()));
-	}
-
-	public long getPr() {
-		return pr;
-	}
-
-	private Vector<Long> getPrimitiveRoot(long clePrimaire, long phi){
-		Vector<Long> primeFactors = this.genPrimesFactorsList(phi);
-		Vector<Long> primitiveRoots = new Vector<>();
-		for(long i = 2;i<clePrimaire;i++){
-			boolean flg = false;
-			for(Long l: primeFactors){
-				BigInteger iBig = BigInteger.valueOf(i);
-				BigInteger phiBig = BigInteger.valueOf(phi/l);
-				BigInteger pBig = BigInteger.valueOf(clePrimaire);
-				BigInteger pRootBig = iBig.modPow(phiBig, pBig);
-				if(pRootBig.compareTo(BigInteger.valueOf(1))==0){
-					flg = true;
-					break;
-				}
-			}
-			if(!flg)primitiveRoots.add(i);
-		}
-		return primitiveRoots;
-	}
-
-	private Vector<Long> genPrimesFactorsList(long phi){
-		Vector<Long> primesFactors = new Vector<>();
-		while(phi % 2 == 0){
-			primesFactors.add((long) 2);
-			phi /= 2;
-		}
-		for(long i=3;i<=Math.sqrt(phi);i+=2){
-			if(phi % i == 0){
-				primesFactors.add(i);
-				phi /= i;
-			}
-		}
-		if(phi > 2){
-			primesFactors.add(phi);
-		}
-		return primesFactors;
-	}
-}
-
-private class DiffieHellMan{
-	BigInteger clePrimaire, clePrimaireRacine;
-	BigInteger cleSecrete;
-	BigInteger cleFinale;
-
-	public void genClePrimaireEtRacine(){
-		this.clePrimaire = BigInteger.valueOf(new PrimeNumberGen().getPrimeNumber());
-		this.clePrimaireRacine = BigInteger.valueOf(new PrimitiveRootGen(this.clePrimaire.intValue()).getPr());
-	}
-
-	public void genCleSecrete(){
-		this.cleSecrete = BigInteger.valueOf(new PrimeNumberGen().getPrimeNumber());
-	}
-
-	public BigInteger getClePrimaire() {
-		return clePrimaire;
-	}
-
-	public void setClePrimaireRacine(BigInteger a) {
-		this.clePrimaireRacine = a;
-	}
-
-	public void setClePrimaire(BigInteger a) {
-		this.clePrimaire = a;
-	}
-
-	public BigInteger getClePrimaireRacine() {
-		return clePrimaireRacine;
-	}
-
-	public BigInteger toServeur(BigInteger cleSecreteClient){
-		return this.clePrimaireRacine.modPow(cleSecreteClient, this.clePrimaire);
-	}
-
-	public BigInteger toClient(BigInteger cleSecreteServeur){
-		return this.clePrimaireRacine.modPow(cleSecreteServeur, this.clePrimaire);
-	}
-
-	public void aliceCalculationOfKey (BigInteger toClient, BigInteger cleSecreteClient){
-		cleFinale =  toClient.modPow(cleSecreteClient, this.clePrimaire);
-	}
-
-	public void bobCalculationOfKey(BigInteger toServeur, BigInteger cleSecreteServeur){
-		cleFinale =  toServeur.modPow(cleSecreteServeur, this.clePrimaire);
-	}
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 //// CLIENT ////////////////////////////////////////////////////////////////////
@@ -314,22 +143,11 @@ thread_receive = new Thread(new Runnable() {
 
 
 		encrypted_message = in.readLine();
-		/*
-		//TODO erase
-		System.out.println("reception : "+ encrypted_message);
-		*/
-
 		decrypted_message = "";
 
 		if(encrypted_message != null) {
-			System.out.println(encrypted_message);
 			try { decrypted_message = aes.decrypt(encrypted_message); } catch (Exception error) { error.printStackTrace(); }
 
-			/*
-			//TODO erase
-			System.out.println("decrypatage :"+decrypted_message);
-			*/
-			//decrypted_message=encrypted_message;
 			read(decrypted_message);
 		} else {
 			System.out.println(name + " leave the chat");
@@ -347,10 +165,7 @@ thread_receive = new Thread(new Runnable() {
 //// READ MESSAGE //////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 private final void read(String message) {
-
-	System.out.println();
-	System.out.println(message);
-	System.out.println();
+	
 	
 	Client sender = clients.get(name);
 	Client receiver;
@@ -480,7 +295,7 @@ break; } break; default: break; }}}
 	private final Scanner scanner = new Scanner(System.in);
 
 ////// OTHERS
-	private DiffieHellMan securiteInitial = new DiffieHellMan();
+	private DiffieHellman securiteInitial = new DiffieHellman();
 	private final String server_name = "Server";
 
 	private final String server_red = "255";
@@ -636,17 +451,8 @@ public void sendPublicMessage(String sender, String red, String green, String bl
 	mutex.lock();
 	for (Client client : clients.values()) {
 		try {
-
-			/*
-			//TODO erase
-			System.out.println("message : "+xml_message);
-			System.out.println("crypatage : "+client.aes.crypatage(xml_message));
-			*/
-
 			String encrypted_message = client.aes.encrypt(xml_message);
-			
-			//System.out.println(client.aes.decrypatage(encrypted_message));
-			
+						
 			client.out.println(encrypted_message);
 			client.out.flush();
 		} catch (Exception error) { error.printStackTrace(); }
@@ -682,12 +488,6 @@ thread_connect = new Thread(new Runnable() { @Override public void run() { while
 
 	System.out.println(client.name + " enter the chat");
 	mutex.unlock();
-	// TODO : ENVOYER CE MESSAGE QUAND TOUS LES CLIENTS AURONT LA BONNE CLEF
-	//sendPublicMessage(server_name, server_red, server_green, server_blue, client.name + " enter the chat");
-
-	// TODO : A SUPPRIMER AVEC LA FONCTION
-	//sendAesKey(client.name);
-
 
 } catch (IOException error) { error.printStackTrace(); } }}}); thread_connect.start();
 ////////////////////////////////////////////////////////////////////////////////
