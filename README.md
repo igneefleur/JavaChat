@@ -33,6 +33,11 @@ Lorsqu'un Serveur envoie uniquement la chaine "bye", le serveur se ferme, et tou
 
 > La clé AES se génère pour le Client et le Serveur à partir d'un nombre secret est et directement utilisé pour crypter et décrypter des messages. Le nombre secret changeant pour chaque Client, charger une clé existante ou l'exporter est inutile.
 
+
+> Sources utilisés :
+>> PDF fourni <br/>
+>> https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwjlwrTo0-j0AhVEyxoKHeCvBgEQFnoECAcQAQ&url=https%3A%2F%2Fwww.baeldung.com%2Fjava-aes-encryption-decryption&usg=AOvVaw1fdXLe1Z_nfdTR9WJneWyz
+
 ***4) Intégrez le code responsable du chargement de la clé depuis un fichier au processus de démarrage du client et du serveur.***
 
 > Voir réponse aux questions ***3*** et ***6.1***.

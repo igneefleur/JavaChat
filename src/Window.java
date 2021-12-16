@@ -224,7 +224,7 @@ public class Window extends JFrame implements WindowListener, KeyListener {
 	private int main_height = 0;
 	private final Label space = new Label();
 
-	private final JTextArea input = new JTextArea();
+	private final JTextArea input = new JTextArea("Enter text here.");
 
 	private final ArrayList<Message> messages = new ArrayList<Message>();
 
