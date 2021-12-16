@@ -246,6 +246,12 @@ public class Client {
 						+ "</private></command>";
 
 				break;
+			case "/getKey":
+				xml_message = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+						+ "<command><getKey>"
+						+ "</getKey></command>";
+
+				break;
 			default: return;
 			}
 
@@ -356,7 +362,7 @@ public class Client {
 			System.out.println("Chat : [Connecting] - Recherche du serveur.");
 
 			String textInitiation = "[Connecting] - La relation au serveur est en cours d'etablissement...";
-			window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), textInitiation, "");
+			window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), textInitiation, textInitiation);
 
 			connexion = new Thread(new Runnable() {
 				@Override
@@ -377,7 +383,8 @@ public class Client {
 				}
 			});
 			connexion.start();
-			window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), "[Connecting] - Recherche en cours...","");
+			String connexionEnCours = "[Connecting] - Recherche en cours...";
+			window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), connexionEnCours, connexionEnCours);
 			//affichage du temps de recherche
 			LocalTime temps = LocalTime.now();
 			Integer memo = 1;
@@ -401,7 +408,7 @@ public class Client {
 				connexion.stop();
 				String textRelationServeur = "[Connected] - La relation au serveur est effectuee.";
 
-				window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), textRelationServeur, "");
+				window.addPrivateMessage("Chat", new Color(140,46,12), "You", new Color(0,230,230), getActualTime(), textRelationServeur, textRelationServeur);
 				System.out.println("Chat : [Connecting] - Serveur trouvé.");
 
 				//connexion
@@ -541,7 +548,6 @@ public class Client {
 	 *
 	 * fermeture de l'application
 	 *
-	 * ajouter un Bouton
 	 *
 	 * faire le compte-rendue !
 	 *

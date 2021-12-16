@@ -62,4 +62,8 @@ public final class AES {
 			}
 		}
 		
+		public String getKey() {
+			return Base64.getEncoder().encodeToString(key.getEncoded());
+		}
+		
 	}

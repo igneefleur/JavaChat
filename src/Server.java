@@ -178,11 +178,15 @@ public final class Server {
 									+ "\n" + "All commands :"
 									+ "\n"
 									+ "\n" + "/help                          show this help"
+									+ "\n" + "/getKey                        send your own AES key"
 									+ "\n" + "/rename [NAME]                 change your name"
-									+ "\n" + "/recolor [RED] [GREEN] [BLUE]    change your colorname"
+									+ "\n" + "/recolor [RED] [GREEN] [BLUE]  change your colorname"
 									+ "\n" + "/private [NAME] [TEXT]         send private message to user"
 									+ "\n" + "==========================================================="
 							);
+					break;
+				case "getKey":
+					sendPrivateMessage(server_name, server_red, server_green, server_blue, sender.name, sender.red, sender.green, sender.blue,sender.aes.getKey());
 					break;
 				case "rename":
 					String new_name = root.getElementsByTagName("name").item(0).getTextContent();
