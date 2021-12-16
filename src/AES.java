@@ -1,6 +1,5 @@
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -40,7 +39,6 @@ public final class AES {
 			try {
 				Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
 				cipher.init(Cipher.ENCRYPT_MODE, this.key, new IvParameterSpec(this.iv));
-				AlgorithmParameters params = cipher.getParameters();
 				byte[] ciphertext = cipher.doFinal(decrypted_message.getBytes(StandardCharsets.UTF_8));
 				String encrypted_message = Base64.getEncoder().encodeToString(ciphertext);
 				return encrypted_message;

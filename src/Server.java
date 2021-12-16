@@ -16,7 +16,6 @@ import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantLock;
 
 ////// TIME
-import java.util.Date;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
@@ -52,6 +51,7 @@ public final class Server {
 		////////////////////////////////////////////////////////////////////
 
 		////// SOCKET
+		@SuppressWarnings("unused")
 		Socket socket;
 		PrintWriter out;
 		BufferedReader in;
@@ -198,8 +198,6 @@ public final class Server {
 					}
 					break;
 				case "recolor":
-					// TODO
-
 					String sender_red = root.getElementsByTagName("red").item(0).getTextContent();
 					String sender_green = root.getElementsByTagName("green").item(0).getTextContent();
 					String sender_blue = root.getElementsByTagName("blue").item(0).getTextContent();
@@ -248,9 +246,6 @@ public final class Server {
 	private ServerSocket server = null;
 	private final HashMap<String, Client> clients = new HashMap<String, Client>();
 	private int clientCounter = 0;
-
-	////// TIME
-	private Date date = new Date();
 
 	////// THREADS
 	private final ReentrantLock mutex = new ReentrantLock();
